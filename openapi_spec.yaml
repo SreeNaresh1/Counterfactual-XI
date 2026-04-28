@@ -1,0 +1,161 @@
+openapi: 3.0.3
+info:
+  title: IPL Win Probability API
+  version: 1.0.0
+servers:
+  - url: http://127.0.0.1:8000
+paths:
+  /api/predict:
+    post:
+      summary: Predict ball-state win probability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: prediction response
+  /api/match_timeline:
+    get:
+      summary: Get timeline for a match
+      parameters:
+        - in: query
+          name: match_id
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: timeline payload
+  /api/live_update:
+    post:
+      summary: Incremental live update for a ball
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: live state response
+  /api/franchise_stats:
+    get:
+      summary: Franchise analytics stats
+      parameters:
+        - in: query
+          name: team
+          schema: { type: string }
+        - in: query
+          name: season
+          schema: { type: string }
+      responses:
+        '200':
+          description: franchise stats
+  /api/franchise_insight:
+    post:
+      summary: Generate franchise insight text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200':
+          description: insight text
+  /api/model_metadata:
+    get:
+      summary: Model metadata
+      responses:
+        '200':
+          description: metadata
+  /api/batch_predict:
+    post:
+      summary: Batch score uploaded CSV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: scored CSV in base64 wrapper
+  /api/monitor_status:
+    get:
+      summary: Drift/performance monitor snapshot
+      responses:
+        '200':
+          description: monitor payload
+  /api/trigger_retrain:
+    post:
+      summary: Queue retrain simulation job
+      responses:
+        '200':
+          description: queued job id
+  /api/audit_log:
+    get:
+      summary: Monitoring audit history
+      responses:
+        '200':
+          description: log rows
+  /api/counterfactual:
+    post:
+      summary: Counterfactual scenario scoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200':
+          description: scenario probabilities
+  /api/whatif_grid:
+    post:
+      summary: What-if grid over runs and wickets delta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200':
+          description: heatmap grid values
+  /api/shap_values:
+    get:
+      summary: Local SHAP values for selected ball index
+      parameters:
+        - in: query
+          name: ball_index
+          schema: { type: integer }
+      responses:
+        '200':
+          description: shap payload
+  /api/global_importance:
+    get:
+      summary: Global feature importance
+      responses:
+        '200':
+          description: importance payload
+  /api/research_summary:
+    post:
+      summary: Generate research summary text
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '200':
+          description: summary text
+  /api/openapi_yaml:
+    get:
+      summary: Return openapi yaml file content
+      responses:
+        '200':
+          description: yaml string

@@ -1,0 +1,12 @@
+{
+  "name": "ipl-win-probability-presentation",
+  "version": "1.0.0",
+  "description": "PptxGenJS deck generator for Counterfactual Strategy Analysis in IPL",
+  "main": "create_presentation.js",
+  "scripts": {
+    "build:ppt": "node create_presentation.js"
+  },
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
+  }
+}
