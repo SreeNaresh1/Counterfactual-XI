@@ -6,7 +6,7 @@ builder = "nixpacks"
 [deploy]
 # If you are using FastAPI, this is the standard start command. 
 # If you are using Flask, change it to: gunicorn main:app -b 0.0.0.0:$PORT
-startCommand = "python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
+# startCommand will be picked up from nixpacks.toml
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
 healthcheckPath = "/"
