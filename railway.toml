@@ -1,0 +1,18 @@
+[build]
+builder = "nixpacks"
+# You can also specify build commands if you need to download extra NLTK data or something similar:
+# buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+# If you are using FastAPI, this is the standard start command. 
+# If you are using Flask, change it to: gunicorn main:app -b 0.0.0.0:$PORT
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+healthcheckPath = "/"
+healthcheckTimeout = 100
+
+[env]
+# Railway will automatically use Nixpacks. Specify your Python version here.
+PYTHON_VERSION = "3.10"
+PORT = "8000"
