@@ -143,24 +143,3 @@ If needed for viva/demo, capture screenshots of:
 1. `/api/predict` response with `prediction_mode` and `components`
 2. `/api/model_metadata` response
 3. UI dashboard running locally
-
----
-
-## Team Member Details
-
-Update this section before final submission:
-
-- Member 1: Name | Roll No | Role
-- Member 2: Name | Roll No | Role
-- Member 3: Name | Roll No | Role
-- Member 4: Name | Roll No | Role
-
----
-
-## Review 3 Checklist
-
-- [x] Deep learning algorithm implemented
-- [x] DL integrated with existing ML pipeline
-- [x] GitHub-ready reproducible structure
-- [x] README updated with compulsory sections
-- [x] Demo endpoints available for live execution
