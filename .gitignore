@@ -1,4 +1,7 @@
-﻿.venv-1/
+.venv/
+.venv-1/
+.venv2/
 __pycache__/
 *.pyc
 artifacts/monitoring/*.json
+node_modules/

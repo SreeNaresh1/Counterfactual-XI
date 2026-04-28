@@ -13,6 +13,5 @@ healthcheckPath = "/"
 healthcheckTimeout = 100
 
 [env]
-# Railway will automatically use Nixpacks. Specify your Python version here.
+# Railway will automatically use Nixpacks. Python version is set via runtime.txt
 PYTHON_VERSION = "3.10"
-PORT = "8000"
