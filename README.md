@@ -110,6 +110,13 @@ Run the final notebook cells in [ML_Project_Final (1).ipynb](ML_Project_Final%20
 uvicorn main:app --reload
 ```
 
+### Deployment Note (Railway / Nixpacks)
+
+To avoid large model artifacts in the repo, the app can download them at runtime. Set these env vars in your deployment:
+
+- `MODEL_BUNDLE_URL`: URL to `stacking_model_bundle.joblib`
+- `DL_MODEL_BUNDLE_URL` (optional): URL to `deep_learning_model_bundle.joblib`
+
 ### 4) Test key endpoints
 
 - Health: `GET /api/health`

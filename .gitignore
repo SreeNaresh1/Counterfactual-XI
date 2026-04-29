@@ -1,20 +1,10 @@
-# Virtual environments
-.venv/
-.venv-1/
-.venv2/
-
-# Python cache
+﻿# .gitignore
 __pycache__/
-*.pyc
-*.pyo
-
-# Node.js
-node_modules/
-presentation/node_modules/
-
-# Auto-generated monitoring reports
-artifacts/monitoring/*.json
-
-# Local/IDE files
-.DS_Store
-*.log
+*.joblib
+artifacts/*.joblib
+*.h5
+*.keras
+*.pkl
+dataset/
+.venv/
+venv/

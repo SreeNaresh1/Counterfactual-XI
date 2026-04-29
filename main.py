@@ -3,9 +3,11 @@ from __future__ import annotations
 import io
 import json
 import math
+import os
 import time
 import uuid
 import base64
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -29,8 +31,13 @@ ARTIFACTS_DIR = Path("artifacts")
 BUNDLE_PATH = ARTIFACTS_DIR / "stacking_model_bundle.joblib"
 DL_BUNDLE_PATH = ARTIFACTS_DIR / "deep_learning_model_bundle.joblib"
 META_PATH = ARTIFACTS_DIR / "model_metadata.json"
+MODEL_BUNDLE_URL = os.getenv("MODEL_BUNDLE_URL", "").strip()
+DL_BUNDLE_URL = os.getenv("DL_MODEL_BUNDLE_URL", "").strip()
 MONITOR_DIR = ARTIFACTS_DIR / "monitoring"
 MONITOR_DIR.mkdir(parents=True, exist_ok=True)
+DATA_DIR = Path("dataset")
+MATCHES_PATH = DATA_DIR / "matches.csv"
+DELIVERIES_PATH = DATA_DIR / "deliveries.csv"
 
 FEATURE_NAMES = [
     "overs_remaining",
@@ -101,6 +108,23 @@ def _safe_float(v: Any, default: float) -> float:
         return float(default)
 
 
+def _download_if_missing(path: Path, url: str) -> None:
+    if path.exists() or not url:
+        return
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = path.with_suffix(path.suffix + ".tmp")
+        with urllib.request.urlopen(url, timeout=30) as resp, tmp_path.open("wb") as f:
+            f.write(resp.read())
+        tmp_path.replace(path)
+    except Exception:
+        try:
+            if tmp_path.exists():
+                tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+
 def _load_bundle() -> None:
     global model, scaler, dl_model, dl_scaler, feature_names, dl_feature_names, fallback_mode
 
@@ -112,6 +136,8 @@ def _load_bundle() -> None:
     dl_feature_names = FEATURE_NAMES.copy()
 
     try:
+        if not BUNDLE_PATH.exists():
+            _download_if_missing(BUNDLE_PATH, MODEL_BUNDLE_URL)
         if BUNDLE_PATH.exists():
             bundle = joblib.load(BUNDLE_PATH)
             model = bundle.get("model")
@@ -122,6 +148,8 @@ def _load_bundle() -> None:
         scaler = None
 
     try:
+        if not DL_BUNDLE_PATH.exists():
+            _download_if_missing(DL_BUNDLE_PATH, DL_BUNDLE_URL)
         if DL_BUNDLE_PATH.exists():
             dl_bundle = joblib.load(DL_BUNDLE_PATH)
             dl_model = dl_bundle.get("model")
@@ -130,6 +158,15 @@ def _load_bundle() -> None:
     except Exception:
         dl_model = None
         dl_scaler = None
+
+    try:
+        if META_PATH.exists():
+            meta_raw = json.loads(META_PATH.read_text(encoding="utf-8"))
+            if meta_raw.get("prediction_mode") == "ml_only" or meta_raw.get("deep_learning_enabled") is False:
+                dl_model = None
+                dl_scaler = None
+    except Exception:
+        pass
 
     fallback_mode = (model is None or scaler is None) and (dl_model is None or dl_scaler is None)
 
@@ -342,8 +379,19 @@ def _load_meta() -> Dict[str, Any]:
     return default
 
 
+def _load_latest_monitor_report() -> Optional[Dict[str, Any]]:
+    reports = sorted(MONITOR_DIR.glob("monitor_report_*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not reports:
+        return None
+    try:
+        return json.loads(reports[0].read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
 AUDIT_LOG: List[Dict[str, Any]] = []
 RETRAIN_JOBS: Dict[str, Dict[str, Any]] = {}
+DATA_STATS: Optional[Dict[str, Any]] = None
 
 
 def _append_audit(action: str, drift_flag: bool, performance_flag: bool, details: Optional[Dict[str, Any]] = None) -> None:
@@ -358,6 +406,32 @@ def _append_audit(action: str, drift_flag: bool, performance_flag: bool, details
         },
     )
     del AUDIT_LOG[100:]
+
+
+def _load_data_stats() -> Dict[str, Any]:
+    global DATA_STATS
+    if DATA_STATS is not None:
+        return DATA_STATS
+    stats = {
+        "matches_rows": None,
+        "deliveries_rows": None,
+        "matches_columns": None,
+        "deliveries_columns": None,
+        "data_path": str(DATA_DIR),
+    }
+    try:
+        if MATCHES_PATH.exists():
+            matches = pd.read_csv(MATCHES_PATH)
+            stats["matches_rows"] = int(matches.shape[0])
+            stats["matches_columns"] = int(matches.shape[1])
+        if DELIVERIES_PATH.exists():
+            deliveries = pd.read_csv(DELIVERIES_PATH)
+            stats["deliveries_rows"] = int(deliveries.shape[0])
+            stats["deliveries_columns"] = int(deliveries.shape[1])
+    except Exception:
+        pass
+    DATA_STATS = stats
+    return stats
 
 
 @app.get("/")
@@ -514,6 +588,11 @@ def model_metadata() -> Dict[str, Any]:
     return _load_meta()
 
 
+@app.get("/api/data_stats")
+def data_stats() -> Dict[str, Any]:
+    return _load_data_stats()
+
+
 @app.post("/api/batch_predict")
 async def batch_predict(file: UploadFile = File(...)) -> Dict[str, Any]:
     if not file.filename.lower().endswith(".csv"):
@@ -629,6 +708,15 @@ def global_importance() -> Dict[str, Any]:
 
 @app.get("/api/monitor_status")
 def monitor_status() -> Dict[str, Any]:
+    cached = _load_latest_monitor_report()
+    if cached:
+        _append_audit(
+            cached.get("maintenance_action", "monitor_only"),
+            bool(cached.get("drift_flag", False)),
+            bool(cached.get("performance_flag", False)),
+            cached,
+        )
+        return cached
     features = [
         "overs_remaining",
         "wickets_remaining",
