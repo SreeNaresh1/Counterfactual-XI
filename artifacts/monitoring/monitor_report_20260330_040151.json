@@ -1,0 +1,35 @@
+{
+  "psi_scores": {
+    "overs_remaining": 0.1502138547744733,
+    "wickets_remaining": 0.12624132368008836,
+    "pressure_index": 0.08655631618468743,
+    "required_run_rate": 0.10784351314010329,
+    "momentum_short": 0.1999535233589973,
+    "resource_remaining": 0.19172133734391777,
+    "collapse_risk": 0.24289822474912737,
+    "target": 0.01
+  },
+  "z_shifts": {
+    "overs_remaining": 1.0462183889690193,
+    "wickets_remaining": 1.0268821894557012,
+    "pressure_index": 1.5545952610770126,
+    "required_run_rate": 0.9930584678901155,
+    "momentum_short": 0.9381352931041615,
+    "resource_remaining": 2.104677431111119,
+    "collapse_risk": 1.5602787638024864,
+    "target": 0.3502723797683367
+  },
+  "missing_shift_features": [],
+  "roc_auc": 0.7876137362509963,
+  "maintenance_action": "retrain_required",
+  "last_checked": "2026-03-30T04:01:51.564934+00:00",
+  "drift_feature_count": 2,
+  "drift_flag": true,
+  "performance_flag": false,
+  "psi_alert_features": [
+    "collapse_risk"
+  ],
+  "z_alert_features": [
+    "resource_remaining"
+  ]
+}

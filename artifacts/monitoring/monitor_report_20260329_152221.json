@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-03-29T15:22:11.798239+00:00",
+  "n_rows_reference": 83925,
+  "n_rows_batch": 38697,
+  "high_missing_shift_features": [],
+  "high_mean_shift_features": [],
+  "high_psi_features": [
+    "venue",
+    "batting_team_strength",
+    "bowling_team_strength",
+    "batting_team",
+    "bowling_team",
+    "team_matchup",
+    "target_score"
+  ],
+  "accuracy": 0.7701889035325736,
+  "f1": 0.7566162182873094,
+  "roc_auc": 0.8545782922667825,
+  "maintenance_action": "retrain_required"
+}

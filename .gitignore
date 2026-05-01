@@ -7,4 +7,6 @@ artifacts/*.joblib
 *.pkl
 dataset/
 .venv/
-venv/
+venv/.venv2/
+node_modules/
+__pycache__/

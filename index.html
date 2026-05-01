@@ -1,865 +1,649 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IPL Counterfactual Strategy Analysis Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <style>
-    :root {
-      --bg-primary: #0a0e1a;
-      --bg-secondary: #0f1528;
-      --bg-card: rgba(255,255,255,0.04);
-      --border-glow: rgba(255,185,0,0.25);
-      --accent-gold: #FFB900;
-      --accent-green: #00E676;
-      --accent-red: #FF1744;
-      --accent-blue: #2979FF;
-      --text-primary: #F0F4FF;
-      --text-muted: #8892A4;
-      --font-display: 'Chakra Petch', monospace;
-      --font-body: 'DM Sans', sans-serif;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: radial-gradient(circle at 20% 10%, #13203f 0%, var(--bg-primary) 30%, #070a13 100%);
-      color: var(--text-primary);
-      font-family: var(--font-body);
-      min-height: 100vh;
-    }
-    .app {
-      display: grid;
-      grid-template-columns: 270px 1fr;
-      min-height: 100vh;
-    }
-    .sidebar {
-      padding: 20px;
-      border-right: 1px solid rgba(255,255,255,0.08);
-      background: linear-gradient(180deg, rgba(12,18,35,0.95), rgba(9,13,26,0.9));
-      position: sticky;
-      top: 0;
-      height: 100vh;
-    }
-    .brand {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      margin-bottom: 18px;
-      letter-spacing: .4px;
-    }
-    .live {
-      display: flex; align-items: center; gap: 8px;
-      color: var(--text-muted); font-size: .9rem;
-      margin-bottom: 16px;
-    }
-    .live-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent-green);
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0%,100% { box-shadow: 0 0 0 0 rgba(0,230,118,.4); }
-      50% { box-shadow: 0 0 0 8px rgba(0,230,118,0); }
-    }
-    .nav-btn {
-      width: 100%;
-      background: transparent;
-      color: var(--text-primary);
-      border: 1px solid transparent;
-      text-align: left;
-      border-radius: 10px;
-      padding: 10px 12px;
-      margin: 5px 0;
-      cursor: pointer;
-      transition: all .3s ease;
-      display:flex; align-items: center; gap: 8px;
-      font-family: var(--font-body);
-    }
-    .nav-btn:hover { background: rgba(255,255,255,.05); }
-    .nav-btn.active {
-      border: 1px solid var(--border-glow);
-      background: rgba(255,185,0,.08);
-      box-shadow: 0 0 16px rgba(255,185,0,.15);
-    }
-    .main {
-      padding: 18px;
-      overflow-x: hidden;
-    }
-    .section { display: none; animation: fadeIn .3s ease; }
-    .section.active { display: block; }
-    @keyframes fadeIn { from { opacity: .2; transform: translateY(4px);} to {opacity:1; transform:translateY(0);} }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPL Analytics Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root {
+    --bg: #030712;
+    --surface: rgba(17, 24, 39, 0.75);
+    --surface-hover: rgba(31, 41, 55, 0.85);
+    --border: rgba(255, 255, 255, 0.08);
+    --primary: #3b82f6;
+    --accent: #8b5cf6;
+    --gold: #fbbf24;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
 
-    .grid { display: grid; gap: 14px; grid-template-columns: repeat(12, 1fr); }
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-glow);
-      border-radius: 12px;
-      backdrop-filter: blur(12px);
-      padding: 18px;
-      box-shadow: 0 0 24px rgba(255,185,0,.06);
-    }
-    .card h3 { margin: 0 0 10px; font-family: var(--font-display); }
-    .span-4 { grid-column: span 4; }
-    .span-5 { grid-column: span 5; }
-    .span-6 { grid-column: span 6; }
-    .span-7 { grid-column: span 7; }
-    .span-8 { grid-column: span 8; }
-    .span-12 { grid-column: span 12; }
-    .inputs {
-      display:grid;
-      grid-template-columns: repeat(2, minmax(120px,1fr));
-      gap: 10px;
-    }
-    label { font-size: .82rem; color: var(--text-muted); display:block; margin-bottom: 4px; }
-    input, select, button, textarea {
-      width: 100%;
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 9px;
-      background: rgba(9,14,26,.75);
-      color: var(--text-primary);
-      padding: 9px;
-      font-family: var(--font-body);
-    }
-    button.primary {
-      background: linear-gradient(90deg, #ca8a04, var(--accent-gold));
-      color: #081020; border: none; font-weight: 700;
-      cursor: pointer;
-    }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip {
-      font-size: .82rem;
-      background: rgba(41,121,255,.1);
-      border: 1px solid rgba(41,121,255,.4);
-      color: #cde1ff;
-      border-radius: 999px;
-      padding: 4px 10px;
-    }
-    .danger-badge { background: rgba(255,23,68,.16); border-color: rgba(255,23,68,.5); color: #ffd5de; }
-    .gauge-wrap { display:grid; place-items:center; }
-    .gauge-value { font-size: 2.1rem; font-family: var(--font-display); margin-top: -24px; }
-    .probability-bar { height: 8px; border-radius: 4px; background: linear-gradient(90deg,var(--accent-red),var(--accent-gold),var(--accent-green)); width:0; transition: width 600ms cubic-bezier(0.4,0,0.2,1); }
-    .timeline-controls { display:flex; gap:8px; flex-wrap: wrap; }
-    .heatmap-grid {
-      display:grid; grid-template-columns: 140px repeat(3,1fr); gap:8px;
-    }
-    .cell {
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 8px; padding: 8px; text-align:center;
-      font-size: .85rem;
-    }
-    .status {
-      padding: 14px;
-      border-radius: 10px;
-      font-weight: 700;
-      text-align:center;
-    }
-    .status.green { background: rgba(0,230,118,.12); border:1px solid rgba(0,230,118,.4); color:#b0ffd8; }
-    .status.red { background: rgba(255,23,68,.16); border:1px solid rgba(255,23,68,.4); color:#ffd7e0; }
-    .small { color: var(--text-muted); font-size: .82rem; }
-    .table { width:100%; border-collapse: collapse; font-size: .88rem; }
-    .table th, .table td { border-bottom: 1px solid rgba(255,255,255,.08); padding: 7px; text-align:left; }
-    .whatif-grid {
-      display:grid;
-      gap: 2px;
-      background: rgba(255,255,255,.06);
-      padding: 2px;
-      border-radius: 8px;
-    }
-    .whatif-cell { min-height: 28px; display:grid; place-items:center; font-size:.75rem; }
-    .shap-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
-    .shap-label { width: 180px; font-size: .82rem; color: var(--text-muted); }
-    .shap-bar { height: 16px; border-radius: 6px; transition: width .4s ease; }
+  /* Animated Background */
+  .bg-animation {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: -1;
+    background: radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 30%),
+                radial-gradient(circle at 85% 30%, rgba(251, 191, 36, 0.08), transparent 30%),
+                radial-gradient(circle at 50% 80%, rgba(139, 92, 246, 0.08), transparent 30%);
+    animation: pulseBg 12s infinite alternate ease-in-out;
+  }
+  @keyframes pulseBg {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.05); }
+  }
 
-    @media (max-width: 980px) {
-      .app { grid-template-columns: 1fr; }
-      .sidebar { position: static; height: auto; }
-      .span-4,.span-5,.span-6,.span-7,.span-8,.span-12 { grid-column: span 12; }
-      .inputs { grid-template-columns: 1fr; }
-    }
-  </style>
+  /* Sidebar */
+  .sidebar {
+    width: 280px;
+    background: rgba(3, 7, 18, 0.85);
+    backdrop-filter: blur(24px);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.25rem;
+    z-index: 10;
+  }
+  .brand {
+    font-size: 1.4rem; font-weight: 700; color: #fff;
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-bottom: 2.5rem; padding: 0 0.5rem;
+    background: linear-gradient(90deg, var(--gold), var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .nav-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 0.875rem 1.25rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: flex; align-items: center; gap: 0.875rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    font-family: inherit;
+  }
+  .nav-btn:hover { background: var(--surface); color: var(--text); }
+  .nav-btn.active {
+    background: linear-gradient(90deg, rgba(59,130,246,0.15), rgba(139,92,246,0.05));
+    color: var(--gold);
+    border: 1px solid rgba(251,191,36,0.2);
+    box-shadow: 0 0 20px rgba(59,130,246,0.1);
+  }
+
+  /* Main Area */
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2.5rem;
+    scroll-behavior: smooth;
+  }
+  .section { display: none; animation: fadeIn 0.5s ease-out forwards; opacity: 0; transform: translateY(15px); }
+  .section.active { display: block; }
+  @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+  /* Glassmorphism Cards */
+  .glass-card {
+    background: var(--surface);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    padding: 1.75rem;
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  .glass-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .card-header {
+    font-size: 1.15rem; font-weight: 600; margin-bottom: 1.25rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    color: var(--gold);
+  }
+  
+  /* Layout */
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+  .mt-4 { margin-top: 1.5rem; }
+  .flex { display: flex; }
+  .justify-between { justify-content: space-between; }
+  .items-center { align-items: center; }
+
+  /* Forms & Inputs */
+  .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+  .form-control {
+    width: 100%; padding: 0.875rem 1rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+    border-radius: 0.75rem; color: var(--text); transition: all 0.2s; font-family: inherit; font-size: 0.95rem;
+  }
+  .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59,130,246,0.25); }
+
+  /* Buttons */
+  .btn {
+    padding: 0.875rem 1.75rem; border-radius: 0.75rem; border: none; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: 0.95rem; font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold), #d97706); color: #000;
+    box-shadow: 0 4px 14px rgba(251, 191, 36, 0.3);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4); transform: translateY(-2px);
+  }
+  .btn-outline {
+    background: transparent; border: 1px solid var(--border); color: var(--text);
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.05); }
+
+  /* Badges */
+  .badge { padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; }
+  .badge-primary { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+  .badge-success { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+  .badge-warning { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .badge-danger { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+  /* Typography */
+  .text-3xl { font-size: 2.25rem; font-weight: 700; }
+  .text-muted { color: var(--text-muted); }
+  .text-success { color: var(--success); }
+  .text-primary { color: var(--primary); }
+  .text-gold { color: var(--gold); }
+
+  /* Gauge */
+  .gauge-container { position: relative; width: 280px; height: 140px; margin: 0 auto; overflow: hidden; }
+  .gauge-bg { position: absolute; width: 100%; height: 200%; border-radius: 50%; border: 24px solid rgba(255,255,255,0.05); box-sizing: border-box; }
+  .gauge-fill {
+    position: absolute; width: 100%; height: 200%; border-radius: 50%; box-sizing: border-box;
+    border: 24px solid transparent; border-top-color: var(--gold); border-left-color: var(--gold);
+    transform: rotate(45deg); transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .gauge-center { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); text-align: center; width: 100%; }
+  .gauge-value { font-size: 3.5rem; font-weight: 800; line-height: 1; color: var(--text); }
+
+  /* Stat Box */
+  .stat-box { text-align: center; padding: 1.25rem; background: rgba(0,0,0,0.25); border-radius: 1rem; border: 1px solid var(--border); }
+  .stat-box .value { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .stat-box .label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 1rem; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; text-align: left; text-transform: uppercase; }
+  td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.95rem; }
+</style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">🏏 IPL Win Probability Ops</div>
-      <div class="live"><span class="live-dot"></span>Live Monitoring Enabled</div>
-      <button class="nav-btn active" data-target="m1">1. Live Match Support</button>
-      <button class="nav-btn" data-target="m2">2. Broadcast Timeline</button>
-      <button class="nav-btn" data-target="m3">3. Franchise Intelligence</button>
-      <button class="nav-btn" data-target="m4">4. Deployment Blueprint</button>
-      <button class="nav-btn" data-target="m5">5. MLOps Governance</button>
-      <button class="nav-btn" data-target="m6">6. Counterfactual Lab</button>
-      <button class="nav-btn" data-target="m7">7. SHAP & Research</button>
-    </aside>
+<div class="bg-animation"></div>
 
-    <main class="main">
-      <section class="section active" id="m1">
-        <div class="grid">
-          <div class="card span-7">
-            <h3>Live Match Decision Support</h3>
-            <div class="inputs" id="matchInputs"></div>
-            <div style="margin-top:10px;" class="chips" id="derivedChips"></div>
-            <div style="margin-top:10px;" class="chips">
-              <span class="chip" id="criticalBadge">Phase stable</span>
-            </div>
-          </div>
-          <div class="card span-5">
-            <h3>Win Probability Gauge</h3>
-            <div class="gauge-wrap">
-              <svg width="320" height="180" viewBox="0 0 320 180" aria-label="Win Probability Gauge">
-                <path d="M20 160 A140 140 0 0 1 300 160" stroke="rgba(255,255,255,.16)" stroke-width="16" fill="none"/>
-                <path id="gaugeArc" d="M20 160 A140 140 0 0 1 300 160" stroke="#00E676" stroke-linecap="round" stroke-width="16" fill="none" stroke-dasharray="440" stroke-dashoffset="440"/>
-              </svg>
-              <div class="gauge-value" id="gaugeValue">50.0%</div>
-              <div class="small">Confidence: <span id="confBand">±2%</span></div>
-              <div style="width:100%;max-width:300px;margin-top:10px;border:1px solid rgba(255,255,255,.08);border-radius:8px;overflow:hidden"><div id="probBar" class="probability-bar"></div></div>
-            </div>
-          </div>
-          <div class="card span-12">
-            <h3>Tactical Recommendations</h3>
-            <ul id="tactics"></ul>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="m2">
-        <div class="grid">
-          <div class="card span-12">
-            <h3>Broadcast & Fan Analytics — Win Probability Timeline</h3>
-            <canvas id="timelineChart" height="120"></canvas>
-            <div class="timeline-controls" style="margin-top:10px;">
-              <button class="primary" id="simulateBtn">Simulate Live Match</button>
-              <button id="pauseBtn">Pause</button>
-              <button id="resumeBtn">Resume</button>
-              <button id="resetBtn">Reset</button>
-              <button id="shareMoment">Share This Moment</button>
-              <label><input type="checkbox" id="pressureToggle" style="width:auto;"> Pressure Heatmap Overlay</label>
-            </div>
-            <div style="margin-top:10px" id="momentumStrip" class="chips"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="m3">
-        <div class="grid">
-          <div class="card span-4">
-            <h3>Franchise Selector</h3>
-            <label>Team</label>
-            <select id="teamSelect"></select>
-            <label style="margin-top:8px;">Season</label>
-            <select id="seasonSelect"></select>
-            <button class="primary" id="loadFranchise" style="margin-top:10px;">Load Stats</button>
-            <button id="insightBtn" style="margin-top:8px;">Generate Auction Insight</button>
-            <button id="pdfBtn" style="margin-top:8px;">Export as PDF Report</button>
-          </div>
-          <div class="card span-8">
-            <h3>Phase Performance Heatmap</h3>
-            <div id="phaseHeatmap" class="heatmap-grid"></div>
-          </div>
-          <div class="card span-6">
-            <h3>Collapse Risk by Season</h3>
-            <canvas id="collapseChart" height="120"></canvas>
-          </div>
-          <div class="card span-6">
-            <h3>Pressure Metrics Radar</h3>
-            <canvas id="radarChart" height="120"></canvas>
-          </div>
-          <div class="card span-12">
-            <h3>Franchise Intelligence</h3>
-            <div id="insightText">Load data to generate insights.</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="m4">
-        <div class="grid">
-          <div class="card span-7">
-            <h3>Scalable Production ML Deployment Blueprint</h3>
-            <svg width="100%" height="340" viewBox="0 0 900 340">
-              <defs>
-                <style>.n{fill:#101a33;stroke:#FFB900;stroke-opacity:.35;stroke-width:1}.t{fill:#cdd7ef;font-size:14px;font-family:DM Sans}</style>
-              </defs>
-              <rect class="n" x="20" y="20" width="120" height="46" rx="8"/><text class="t" x="30" y="48">Raw CSV</text>
-              <rect class="n" x="160" y="20" width="150" height="46" rx="8"/><text class="t" x="170" y="48">Preprocessing</text>
-              <rect class="n" x="330" y="20" width="170" height="46" rx="8"/><text class="t" x="340" y="48">Feature Engineering</text>
-              <rect class="n" x="520" y="20" width="140" height="46" rx="8"/><text class="t" x="530" y="48">Season Split</text>
-              <rect class="n" x="680" y="20" width="120" height="46" rx="8"/><text class="t" x="690" y="48">Scaling</text>
-
-              <rect class="n" x="180" y="120" width="120" height="46" rx="8"/><text class="t" x="213" y="148">RF</text>
-              <rect class="n" x="320" y="120" width="120" height="46" rx="8"/><text class="t" x="355" y="148">GBM</text>
-              <rect class="n" x="460" y="120" width="120" height="46" rx="8"/><text class="t" x="492" y="148">XGBoost</text>
-              <rect class="n" x="320" y="200" width="150" height="46" rx="8"/><text class="t" x="333" y="228">Hybrid (ML+DL)</text>
-              <rect class="n" x="490" y="200" width="150" height="46" rx="8"/><text class="t" x="505" y="228">Calibration</text>
-              <rect class="n" x="660" y="200" width="120" height="46" rx="8"/><text class="t" x="690" y="228">.joblib</text>
-              <rect class="n" x="660" y="270" width="120" height="46" rx="8"/><text class="t" x="680" y="298">Inference API</text>
-              <line x1="140" y1="43" x2="160" y2="43" stroke="#00E676"/><line x1="310" y1="43" x2="330" y2="43" stroke="#00E676"/>
-              <line x1="500" y1="43" x2="520" y2="43" stroke="#00E676"/><line x1="660" y1="43" x2="680" y2="43" stroke="#00E676"/>
-              <line x1="740" y1="66" x2="740" y2="120" stroke="#00E676"/><line x1="740" y1="143" x2="580" y2="143" stroke="#00E676"/>
-              <line x1="580" y1="143" x2="470" y2="223" stroke="#00E676"/><line x1="640" y1="223" x2="660" y2="223" stroke="#00E676"/>
-              <line x1="720" y1="246" x2="720" y2="270" stroke="#00E676"/>
-            </svg>
-          </div>
-          <div class="card span-5">
-            <h3>Model Metadata</h3>
-            <div id="metaCard">Loading...</div>
-          </div>
-          <div class="card span-12">
-            <h3>Inference Contract (25 Features)</h3>
-            <div style="overflow:auto; max-height:260px;">
-              <table class="table" id="featureContractTable"></table>
-            </div>
-          </div>
-          <div class="card span-6">
-            <h3>Test Inference</h3>
-            <textarea id="testInferenceJson" rows="8"></textarea>
-            <button class="primary" id="testInferenceBtn" style="margin-top:8px;">Run Inference</button>
-            <pre id="testInferenceOut" class="small"></pre>
-          </div>
-          <div class="card span-6">
-            <h3>Batch Scoring</h3>
-            <input type="file" id="batchCsv" accept=".csv"/>
-            <button class="primary" id="batchBtn" style="margin-top:8px;">Score CSV</button>
-            <div style="margin-top:8px;" class="small" id="batchStatus"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="m5">
-        <div class="grid">
-          <div class="card span-8">
-            <h3>Drift Monitor (auto refresh 30s)</h3>
-            <canvas id="aucChart" height="100"></canvas>
-            <div id="driftFlags" class="chips" style="margin-top:10px;"></div>
-          </div>
-          <div class="card span-4">
-            <h3>Maintenance Action Status</h3>
-            <div id="maintenanceCard" class="status green">monitor_only</div>
-            <div class="small" id="lastChecked" style="margin-top:8px;"></div>
-            <button class="primary" id="retrainBtn" style="margin-top:10px;">Initiate Retrain Pipeline</button>
-            <div class="small" id="retrainStatus" style="margin-top:6px;"></div>
-          </div>
-          <div class="card span-12">
-            <h3>Audit Log</h3>
-            <table class="table" id="auditTable"></table>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="m6">
-        <div class="grid">
-          <div class="card span-4">
-            <h3>Scenario Builder</h3>
-            <label>Match ID</label><input id="cfMatchId" type="number" value="1" min="1"/>
-            <label>Ball Number</label><input id="cfBall" type="number" value="84" min="1" max="120"/>
-            <button class="primary" id="loadBaseState" style="margin-top:8px;">Load Base State</button>
-            <div id="baseProb" style="font-family:var(--font-display);font-size:2rem;margin-top:10px;">--</div>
-            <div class="small">Base Win Probability</div>
-          </div>
-          <div class="card span-8">
-            <h3>Counterfactual Comparison</h3>
-            <canvas id="cfChart" height="120"></canvas>
-          </div>
-          <div class="card span-12">
-            <h3>What-If Explorer Heatmap</h3>
-            <div id="whatifGrid" class="whatif-grid"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section" id="m7">
-        <div class="grid">
-          <div class="card span-7">
-            <h3>SHAP Waterfall (Top 10)</h3>
-            <div id="shapList"></div>
-            <div style="margin-top:10px;" class="small">Base: <span id="shapBase">0.5</span> · Prediction: <span id="shapPred">--</span></div>
-          </div>
-          <div class="card span-5">
-            <h3>Global Feature Importance</h3>
-            <canvas id="globalImpChart" height="150"></canvas>
-          </div>
-          <div class="card span-12">
-            <h3>Research Bridge</h3>
-            <button class="primary" id="researchBtn">Generate Research Summary</button>
-            <button id="openapiBtn" style="margin-top:8px;">Export to SaaS API Spec</button>
-            <p id="noveltyCard" class="small">This system combines Hybrid (ML+DL) probability blending with counterfactual simulation — novel over Duckworth-Lewis and linear baselines.</p>
-            <div id="researchOut" style="white-space: pre-line;"></div>
-          </div>
-        </div>
-      </section>
-    </main>
+<aside class="sidebar">
+  <div class="brand">
+    <i data-lucide="zap"></i> IPL Analytics
   </div>
+  <nav>
+    <button class="nav-btn active" onclick="switchSection('s-dash')"><i data-lucide="layout-dashboard"></i> Dashboard</button>
+    <button class="nav-btn" onclick="switchSection('s-live')"><i data-lucide="activity"></i> Live Prediction</button>
+    <button class="nav-btn" onclick="switchSection('s-sim')"><i data-lucide="flask-conical"></i> What-If Lab</button>
+    <button class="nav-btn" onclick="switchSection('s-timeline')"><i data-lucide="bar-chart-2"></i> Timeline</button>
+    <button class="nav-btn" onclick="switchSection('s-shap')"><i data-lucide="network"></i> Explainability</button>
+    <button class="nav-btn" onclick="switchSection('s-mlops')"><i data-lucide="shield"></i> MLOps</button>
+    <button class="nav-btn" onclick="switchSection('s-franchise')"><i data-lucide="award"></i> Franchise</button>
+  </nav>
+  <div style="margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center;">
+    <span class="badge badge-success" id="apiStatus">Connecting...</span>
+  </div>
+</aside>
 
-  <script>
-    const API_BASE = 'http://127.0.0.1:8000';
-    const state = {
-      matchState: {
-        overs_remaining: 8.0,
-        wickets_remaining: 6,
-        cumulative_runs: 112,
-        balls_remaining: 48,
-        target: 175,
-        required_run_rate: 0,
-        current_run_rate: 0,
-        runs_last_6: 10,
-        wickets_last_6: 0,
-        match_phase: 'Middle',
-        innings_type: 2,
-        pressure_index: 0.52,
-        momentum_short: 0.1,
-        momentum_medium: 0.05,
-        boundary_intensity: 0.28,
-        collapse_indicator: 0,
-        resource_remaining: 0.45,
-        match_progress: 0.6,
-        rr_pressure: 0,
-        wicket_pressure: 0,
-        win_pressure: 0,
-        momentum_swing: 0,
-        momentum_acceleration: 0,
-        collapse_risk: 0,
-        runs_last_12: 16
-      },
-      timeline: [],
-      simTimer: null,
-      simIdx: 0,
-      aucHistory: [],
-      charts: {}
-    };
+<main class="main-content">
 
-    const FEATURES = [
-      'overs_remaining','wickets_remaining','cumulative_runs','balls_remaining','target','required_run_rate','current_run_rate','runs_last_6','wickets_last_6','match_phase_encoded','innings_type','pressure_index','momentum_short','momentum_medium','boundary_intensity','collapse_indicator','resource_remaining','match_progress','rr_pressure','wicket_pressure','win_pressure','momentum_swing','momentum_acceleration','collapse_risk','runs_last_12'
-    ];
+  <section id="s-dash" class="section active">
+    <div class="flex justify-between items-center" style="margin-bottom: 2rem;">
+      <div>
+        <h1 class="text-3xl">System Dashboard</h1>
+        <p class="text-muted mt-2">Complete overview of the IPL Win Probability architecture.</p>
+      </div>
+    </div>
+    
+    <div class="grid-4">
+      <div class="glass-card stat-box">
+        <div class="value text-gold" id="dash-version">v1.1.0</div>
+        <div class="label">Model Version</div>
+      </div>
+      <div class="glass-card stat-box">
+        <div class="value text-success" id="dash-acc">...</div>
+        <div class="label">Test Accuracy</div>
+      </div>
+      <div class="glass-card stat-box">
+        <div class="value text-primary" id="dash-auc">...</div>
+        <div class="label">ROC-AUC</div>
+      </div>
+      <div class="glass-card stat-box">
+        <div class="value text-text" id="dash-feat">25</div>
+        <div class="label">Features</div>
+      </div>
+    </div>
 
-    const navButtons = [...document.querySelectorAll('.nav-btn')];
-    navButtons.forEach(btn => btn.addEventListener('click', () => {
-      navButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById(btn.dataset.target).classList.add('active');
-    }));
-
-    async function api(path, options = {}) {
-      try {
-        const res = await fetch(`${API_BASE}${path}`, {
-          headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-          ...options,
-        });
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `API ${res.status}`);
-        }
-        return await res.json();
-      } catch (e) {
-        console.warn('API fallback:', path, e.message);
-        return fallback(path, options);
-      }
-    }
-
-    function fallback(path, options = {}) {
-      const rand = (a,b) => a + Math.random()*(b-a);
-      if (path.startsWith('/api/predict')) {
-        const p = Math.max(0, Math.min(1, .5 + rand(-.2,.2)));
-        return { win_probability:p, confidence_low:Math.max(0,p-.02), confidence_high:Math.min(1,p+.02), latency_ms:40, derived:{} };
-      }
-      if (path.startsWith('/api/match_timeline')) {
-        let p=.5; const out=[];
-        for(let i=1;i<=120;i++){ p=Math.max(0,Math.min(1,p + rand(-.03,.03))); out.push({ball:i,win_prob:p,runs:Math.floor(rand(0,7)),wicket:Math.random()<.03,boundary:Math.random()<.2,momentum:rand(-1,1),pressure:rand(0,1)}); }
-        return out;
-      }
-      if (path.startsWith('/api/franchise_stats')) {
-        return {phase_win_probs:{batting:{Powerplay:.56,Middle:.54,Death:.61},bowling:{Powerplay:.49,Middle:.53,Death:.51}},pressure_tolerance:{win_avg_pressure:.62,loss_avg_pressure:.75},collapse_risk:Array.from({length:15},(_,i)=>({season:2010+i,collapse_freq:rand(.1,.3)})),rrr_benchmarks:{Powerplay:{won_rrr:7.8,lost_rrr:9.4},Middle:{won_rrr:8.7,lost_rrr:10.8},Death:{won_rrr:10.4,lost_rrr:13.2}},pressure_metrics:{death_execution:.62,chase_control:.59,wicket_resilience:.56,boundary_pressure:.58,spin_resistance:.54,pace_resistance:.57}};
-      }
-      if (path.startsWith('/api/franchise_insight')) return { insight_text:'Team shows stronger Death-over conversion under moderate pressure and better chase control with 5+ wickets in hand.' };
-      if (path.startsWith('/api/model_metadata')) return { model_version:'v1.1.0-hybrid-ml-dl', created_at:new Date().toISOString(), feature_count:25, test_accuracy:.765, train_rows:83925, test_rows:38697 };
-      if (path.startsWith('/api/monitor_status')) return { psi_scores:{pressure_index:.23,target:.12}, z_shifts:{pressure_index:2.2,target:1.7}, missing_shift_features:['target'], roc_auc:.79, maintenance_action:'retrain_required', last_checked:new Date().toISOString(), drift_flag:true, performance_flag:false };
-      if (path.startsWith('/api/audit_log')) return [{timestamp:new Date().toISOString(),drift_flag:true,performance_flag:false,action:'retrain_required'}];
-      if (path.startsWith('/api/counterfactual')) return { base_prob:.62, results:{'Aggressive Over':.8,'Defensive Over':.55,'Wicket Loss':.47,'Optimal Over':.76}};
-      if (path.startsWith('/api/whatif_grid')) return { base_prob:.62, runs_values:[0,5,10,15,20], wicket_values:[0,1,2,3], grid:[[.02,.06,.1,.14,.18],[0,.03,.07,.12,.15],[-.04,-.01,.03,.07,.11],[-.1,-.07,-.03,.02,.06]] };
-      if (path.startsWith('/api/shap_values')) return {base_value:.5,prediction:.73,feature_shap:{overs_remaining:.12,wickets_remaining:.08,pressure_index:-.08,runs_last_6:.06,required_run_rate:-.05,momentum_short:.04,boundary_intensity:.03,collapse_indicator:-.03,resource_remaining:.02,match_progress:.01}};
-      if (path.startsWith('/api/global_importance')) return {features:['overs_remaining','required_run_rate','pressure_index','wickets_remaining','runs_last_6','resource_remaining'],mean_shap:[.13,.12,.1,.09,.08,.06]};
-      if (path.startsWith('/api/research_summary')) return {summary:'Hybrid (ML+DL) integration combines phase pressure, momentum, and collapse features for calibrated ball-level win probability with counterfactual strategy analysis.'};
-      if (path.startsWith('/api/openapi_yaml')) return {yaml:'openapi: 3.0.3\ninfo:\n  title: IPL Win Probability API\n  version: 1.0.0'};
-      if (path.startsWith('/api/trigger_retrain')) return {job_id: crypto.randomUUID(), status:'queued'};
-      return {};
-    }
-
-    function debounce(fn, wait=300){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args),wait); }; }
-
-    function initModule1(){
-      const config = [
-        ['overs_remaining','number',0,20,0.1], ['wickets_remaining','number',0,10,1], ['cumulative_runs','number',0,300,1],
-        ['balls_remaining','number',0,120,1], ['target','number',0,300,1], ['runs_last_6','number',0,36,1], ['wickets_last_6','number',0,6,1],
-        ['pressure_index','number',0,1,0.01], ['momentum_short','number',-1,1,0.01], ['boundary_intensity','number',0,1,0.01]
-      ];
-      const panel = document.getElementById('matchInputs');
-      panel.innerHTML = '';
-      config.forEach(([key,type,min,max,step]) => {
-        const wrap = document.createElement('div');
-        wrap.innerHTML = `<label>${key}</label><input id="in_${key}" type="${type}" min="${min}" max="${max}" step="${step}" value="${state.matchState[key]}">`;
-        panel.appendChild(wrap);
-      });
-      panel.insertAdjacentHTML('beforeend', `<div><label>match_phase</label><select id="in_match_phase"><option>Powerplay</option><option selected>Middle</option><option>Death</option></select></div>`);
-      panel.insertAdjacentHTML('beforeend', `<div><label>innings_type</label><select id="in_innings_type"><option value="1">1st</option><option value="2" selected>2nd</option></select></div>`);
-
-      const updateAndPredict = debounce(async () => {
-        config.forEach(([key]) => state.matchState[key] = Number(document.getElementById(`in_${key}`).value));
-        state.matchState.match_phase = document.getElementById('in_match_phase').value;
-        state.matchState.innings_type = Number(document.getElementById('in_innings_type').value);
-
-        const overs = Math.max(state.matchState.overs_remaining, 1e-6);
-        const ballsUsed = 120 - state.matchState.balls_remaining;
-        const oversBowled = Math.max(ballsUsed / 6, 1e-6);
-        const runsRemaining = Math.max(state.matchState.target - state.matchState.cumulative_runs, 0);
-        state.matchState.required_run_rate = state.matchState.innings_type === 2 ? runsRemaining / overs : 0;
-        state.matchState.current_run_rate = state.matchState.cumulative_runs / oversBowled;
-        state.matchState.resource_remaining = Math.min(1, Math.max(0, (state.matchState.balls_remaining/120) * (state.matchState.wickets_remaining/10)));
-
-        document.getElementById('derivedChips').innerHTML = [
-          `RRR: ${state.matchState.required_run_rate.toFixed(2)}`,
-          `CRR: ${state.matchState.current_run_rate.toFixed(2)}`,
-          `Resource: ${(state.matchState.resource_remaining*100).toFixed(1)}%`
-        ].map(s => `<span class='chip'>${s}</span>`).join('');
-
-        const critical = state.matchState.balls_remaining < 24 && Math.abs(state.matchState.required_run_rate - state.matchState.current_run_rate) > 3;
-        const badge = document.getElementById('criticalBadge');
-        badge.className = `chip ${critical ? 'danger-badge' : ''}`;
-        badge.textContent = critical ? 'CRITICAL PHASE' : 'Phase stable';
-
-        const res = await api('/api/predict', { method:'POST', body: JSON.stringify(state.matchState) });
-        updateGauge(res.win_probability, res.confidence_low, res.confidence_high);
-        const tactics = [];
-        if(state.matchState.wickets_last_6 > 0 && state.matchState.runs_last_6 > 14) tactics.push('Bowling change recommended: wickets_last_6 > 0 and runs_last_6 > 14.');
-        tactics.push(`Batting intent signal: Required RRR is ${((state.matchState.required_run_rate/Math.max(state.matchState.current_run_rate,0.1)-1)*100).toFixed(1)}% above CRR.`);
-        tactics.push(`Confidence band: ${(res.confidence_low*100).toFixed(1)}% - ${(res.confidence_high*100).toFixed(1)}%.`);
-        document.getElementById('tactics').innerHTML = tactics.map(t => `<li>${t}</li>`).join('');
-      }, 300);
-
-      [...panel.querySelectorAll('input,select')].forEach(el => el.addEventListener('input', updateAndPredict));
-      updateAndPredict();
-    }
-
-    function updateGauge(prob, low, high){
-      const p = Math.max(0, Math.min(1, prob));
-      const total = 440;
-      const arc = document.getElementById('gaugeArc');
-      arc.style.strokeDashoffset = (total * (1-p)).toFixed(1);
-      arc.setAttribute('stroke', p < .4 ? '#FF1744' : (p < .6 ? '#FFB900' : '#00E676'));
-      document.getElementById('gaugeValue').textContent = `${(p*100).toFixed(1)}%`;
-      document.getElementById('confBand').textContent = `${(low*100).toFixed(1)}% - ${(high*100).toFixed(1)}%`;
-      document.getElementById('probBar').style.width = `${(p*100).toFixed(1)}%`;
-    }
-
-    async function initModule2(){
-      state.timeline = await api('/api/match_timeline?match_id=1');
-      const labels = state.timeline.map(d => d.ball);
-      const teamA = state.timeline.map(d => d.win_prob);
-      const teamB = teamA.map(v => 1-v);
-      const ctx = document.getElementById('timelineChart');
-      if (state.charts.timeline) state.charts.timeline.destroy();
-      state.charts.timeline = new Chart(ctx, {
-        type: 'line',
-        data: { labels, datasets:[
-          { label:'Team A', data: teamA, borderColor:'#2979FF', backgroundColor:'transparent', tension:.3, pointRadius:0 },
-          { label:'Team B', data: teamB, borderColor:'#FFB900', backgroundColor:'transparent', tension:.3, pointRadius:0 }
-        ]},
-        options: {
-          responsive:true,
-          plugins:{ legend:{labels:{color:'#F0F4FF'}}, tooltip:{enabled:true}},
-          scales:{ x:{title:{display:true,text:'Ball',color:'#8892A4'},ticks:{color:'#8892A4'}}, y:{min:0,max:1,title:{display:true,text:'Win Probability',color:'#8892A4'},ticks:{color:'#8892A4'}} }
-        }
-      });
-      renderMomentumStrip();
-      bindTimelineControls();
-    }
-
-    function renderMomentumStrip(){
-      const strip = document.getElementById('momentumStrip');
-      const overs = Array.from({length:20}, (_,i)=> state.timeline.slice(i*6, i*6+6));
-      strip.innerHTML = overs.map((ov, idx) => {
-        const runs = ov.reduce((a,b)=>a+b.runs,0);
-        const color = runs>10 ? 'rgba(0,230,118,.2)' : runs>=7 ? 'rgba(255,185,0,.2)' : 'rgba(255,23,68,.2)';
-        return `<span class='chip' style='background:${color};border-color:rgba(255,255,255,.18)'>O${idx+1}: ${runs}</span>`;
-      }).join('');
-    }
-
-    function bindTimelineControls(){
-      document.getElementById('simulateBtn').onclick = () => {
-        clearInterval(state.simTimer);
-        state.simIdx = 0;
-        state.simTimer = setInterval(stepSim, 800);
-      };
-      document.getElementById('pauseBtn').onclick = () => clearInterval(state.simTimer);
-      document.getElementById('resumeBtn').onclick = () => { clearInterval(state.simTimer); state.simTimer = setInterval(stepSim, 800); };
-      document.getElementById('resetBtn').onclick = () => { clearInterval(state.simTimer); state.simIdx=0; state.charts.timeline.setActiveElements([]); state.charts.timeline.update(); };
-      document.getElementById('shareMoment').onclick = () => {
-        const b = Math.max(1, state.simIdx);
-        const url = `${location.origin}${location.pathname}?module=2&ball=${b}`;
-        navigator.clipboard.writeText(url);
-        alert('Moment URL copied to clipboard.');
-      };
-      document.getElementById('pressureToggle').onchange = (e) => {
-        const alpha = e.target.checked ? 0.2 : 0;
-        state.charts.timeline.data.datasets[0].backgroundColor = `rgba(255,185,0,${alpha})`;
-        state.charts.timeline.update();
-      };
-    }
-
-    function stepSim(){
-      if (state.simIdx >= state.timeline.length) { clearInterval(state.simTimer); return; }
-      state.charts.timeline.setActiveElements([{datasetIndex:0,index:state.simIdx},{datasetIndex:1,index:state.simIdx}]);
-      state.charts.timeline.update();
-      state.simIdx += 1;
-    }
-
-    function initModule3(){
-      const teamSelect = document.getElementById('teamSelect');
-      ['CSK','MI','RCB','KKR','SRH','RR','DC','PBKS','GT','LSG'].forEach(t => teamSelect.insertAdjacentHTML('beforeend', `<option>${t}</option>`));
-      const seasonSelect = document.getElementById('seasonSelect');
-      for(let y=2010;y<=2024;y++) seasonSelect.insertAdjacentHTML('beforeend', `<option>${y}</option>`);
-      seasonSelect.value = '2024';
-      document.getElementById('loadFranchise').onclick = loadFranchise;
-      document.getElementById('insightBtn').onclick = loadInsight;
-      document.getElementById('pdfBtn').onclick = () => window.print();
-      loadFranchise();
-    }
-
-    async function loadFranchise(){
-      const team = document.getElementById('teamSelect').value;
-      const season = document.getElementById('seasonSelect').value;
-      const data = await api(`/api/franchise_stats?team=${encodeURIComponent(team)}&season=${season}`);
-
-      const h = document.getElementById('phaseHeatmap');
-      const rows = [['Batting', data.phase_win_probs.batting], ['Bowling', data.phase_win_probs.bowling]];
-      h.innerHTML = `<div></div><div class='cell'>Powerplay</div><div class='cell'>Middle</div><div class='cell'>Death</div>` + rows.map(([name, obj]) => {
-        return `<div class='cell'>${name}</div>` + ['Powerplay','Middle','Death'].map(k => {
-          const v = obj[k];
-          const g = Math.round(120 + v*120);
-          return `<div class='cell' style='background:rgba(0,${g},118,.18)'>${(v*100).toFixed(1)}%</div>`;
-        }).join('');
-      }).join('');
-
-      const cctx = document.getElementById('collapseChart');
-      const labels = data.collapse_risk.map(x => x.season);
-      const vals = data.collapse_risk.map(x => x.collapse_freq);
-      if(state.charts.collapse) state.charts.collapse.destroy();
-      state.charts.collapse = new Chart(cctx, {
-        type:'bar',
-        data:{labels, datasets:[{label:'Collapse Frequency', data:vals, backgroundColor:'rgba(255,23,68,.5)'}]},
-        options:{plugins:{legend:{labels:{color:'#F0F4FF'}}},scales:{x:{ticks:{color:'#8892A4'}},y:{ticks:{color:'#8892A4'},title:{display:true,text:'Frequency'}}}}
-      });
-
-      const p = data.pressure_metrics;
-      const rctx = document.getElementById('radarChart');
-      if(state.charts.radar) state.charts.radar.destroy();
-      state.charts.radar = new Chart(rctx, {
-        type:'radar',
-        data:{labels:Object.keys(p),datasets:[{label:team,data:Object.values(p),borderColor:'#2979FF',backgroundColor:'rgba(41,121,255,.2)'}]},
-        options:{plugins:{legend:{labels:{color:'#F0F4FF'}}},scales:{r:{min:0,max:1,pointLabels:{color:'#8892A4'},ticks:{color:'#8892A4'}}}}
-      });
-    }
-
-    async function loadInsight(){
-      const team = document.getElementById('teamSelect').value;
-      const stats = await api(`/api/franchise_stats?team=${encodeURIComponent(team)}&season=${document.getElementById('seasonSelect').value}`);
-      const out = await api('/api/franchise_insight', { method:'POST', body: JSON.stringify({team, stats_summary: stats}) });
-      document.getElementById('insightText').textContent = out.insight_text;
-    }
-
-    async function initModule4(){
-      const table = document.getElementById('featureContractTable');
-      table.innerHTML = `<thead><tr><th>Feature</th><th>Type</th><th>Range</th><th>Description</th></tr></thead><tbody>` + FEATURES.map(f => `<tr><td>${f}</td><td>float</td><td>model-validated</td><td>Engineered match state signal</td></tr>`).join('') + '</tbody>';
-
-      const meta = await api('/api/model_metadata');
-      document.getElementById('metaCard').innerHTML = `
-        <div><b>Version:</b> ${meta.model_version}</div>
-        <div><b>Created:</b> ${meta.created_at}</div>
-        <div><b>Features:</b> ${meta.feature_count}</div>
-        <div><b>Test Accuracy:</b> ${(meta.test_accuracy*100).toFixed(2)}%</div>
-        <div><b>Train Rows:</b> ${meta.train_rows}</div>
-        <div><b>Test Rows:</b> ${meta.test_rows}</div>`;
-
-      document.getElementById('testInferenceJson').value = JSON.stringify(state.matchState, null, 2);
-      document.getElementById('testInferenceBtn').onclick = async () => {
-        try {
-          const payload = JSON.parse(document.getElementById('testInferenceJson').value);
-          const res = await api('/api/predict', { method:'POST', body: JSON.stringify(payload) });
-          document.getElementById('testInferenceOut').textContent = JSON.stringify(res, null, 2);
-        } catch (e) {
-          document.getElementById('testInferenceOut').textContent = `Error: ${e.message}`;
-        }
-      };
-
-      document.getElementById('batchBtn').onclick = async () => {
-        const file = document.getElementById('batchCsv').files[0];
-        if(!file){ alert('Upload CSV first.'); return; }
-        const form = new FormData();
-        form.append('file', file);
-        const el = document.getElementById('batchStatus');
-        el.textContent = 'Scoring...';
-        try {
-          const res = await fetch(`${API_BASE}/api/batch_predict`, {method:'POST', body: form});
-          if(!res.ok) throw new Error(await res.text());
-          const out = await res.json();
-          const bytes = atob(out.csv_base64);
-          const arr = new Uint8Array(bytes.length);
-          for(let i=0;i<bytes.length;i++) arr[i] = bytes.charCodeAt(i);
-          const blob = new Blob([arr], {type:'text/csv'});
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = out.filename || 'scored.csv';
-          a.click();
-          el.textContent = `Completed ${out.rows} rows.`;
-        } catch(e){ el.textContent = `Error: ${e.message}`; }
-      };
-    }
-
-    async function initModule5(){
-      if(state.charts.auc) state.charts.auc.destroy();
-      state.charts.auc = new Chart(document.getElementById('aucChart'), {
-        type:'line',
-        data:{labels:[], datasets:[{label:'Rolling AUC',data:[],borderColor:'#00E676',tension:.3},{label:'Threshold 0.72',data:[],borderColor:'#FF1744',borderDash:[6,6]}]},
-        options:{plugins:{legend:{labels:{color:'#F0F4FF'}}},scales:{x:{ticks:{color:'#8892A4'}},y:{min:.5,max:1,ticks:{color:'#8892A4'}}}}
-      });
-      await refreshMonitor();
-      setInterval(refreshMonitor, 30000);
-      document.getElementById('retrainBtn').onclick = async () => {
-        const r = await api('/api/trigger_retrain',{method:'POST'});
-        document.getElementById('retrainStatus').textContent = `Job ${r.job_id} queued. Steps: Data Pull → Preprocessing → Training → Evaluation → Deploy`;
-      };
-    }
-
-    async function refreshMonitor(){
-      const status = await api('/api/monitor_status');
-      state.aucHistory.push(status.roc_auc);
-      if(state.aucHistory.length>30) state.aucHistory.shift();
-      const chart = state.charts.auc;
-      chart.data.labels = state.aucHistory.map((_,i)=>i+1);
-      chart.data.datasets[0].data = [...state.aucHistory];
-      chart.data.datasets[1].data = state.aucHistory.map(()=>0.72);
-      chart.update();
-
-      const isRed = status.maintenance_action === 'retrain_required';
-      const card = document.getElementById('maintenanceCard');
-      card.className = `status ${isRed ? 'red':'green'}`;
-      card.textContent = isRed ? '⚠ RETRAIN REQUIRED' : 'monitor_only';
-      document.getElementById('lastChecked').textContent = `Last checked: ${status.last_checked}`;
-      const flags = document.getElementById('driftFlags');
-      const psi = Object.entries(status.psi_scores||{}).filter(([,v])=>v>0.2).map(([k])=>k);
-      const z = Object.entries(status.z_shifts||{}).filter(([,v])=>Math.abs(v)>2).map(([k])=>k);
-      flags.innerHTML = [
-        ...psi.map(f=>`<span class='chip danger-badge'>PSI > 0.2: ${f}</span>`),
-        ...z.map(f=>`<span class='chip danger-badge'>|z| > 2: ${f}</span>`),
-        ...(status.missing_shift_features||[]).map(f=>`<span class='chip danger-badge'>Missing shift: ${f}</span>`)
-      ].join('') || '<span class="chip">No active drift alerts.</span>';
-
-      const log = await api('/api/audit_log');
-      const table = document.getElementById('auditTable');
-      table.innerHTML = '<tr><th>Timestamp</th><th>Drift Flag</th><th>Performance Flag</th><th>Action</th></tr>' + (log||[]).map(r=>`<tr><td>${r.timestamp}</td><td>${r.drift_flag}</td><td>${r.performance_flag}</td><td>${r.action}</td></tr>`).join('');
-    }
-
-    function initModule6(){
-      document.getElementById('loadBaseState').onclick = async () => {
-        const base = { ...state.matchState };
-        const payload = {
-          base_state: base,
-          scenarios: [
-            {name:'Aggressive Over', runs_delta:12, balls_delta:6, wicket_delta:0},
-            {name:'Defensive Over', runs_delta:4, balls_delta:6, wicket_delta:0},
-            {name:'Wicket Loss', runs_delta:6, balls_delta:6, wicket_delta:1},
-            {name:'Optimal Over', runs_delta:10, balls_delta:6, wicket_delta:0},
-          ]
-        };
-        const res = await api('/api/counterfactual', {method:'POST', body:JSON.stringify(payload)});
-        document.getElementById('baseProb').textContent = `${(res.base_prob*100).toFixed(1)}%`;
-        const labels = Object.keys(res.results);
-        const vals = Object.values(res.results);
-        if(state.charts.cf) state.charts.cf.destroy();
-        state.charts.cf = new Chart(document.getElementById('cfChart'), {
-          type:'bar',
-          data:{labels,datasets:[{label:'Win Probability',data:vals, backgroundColor:['#00E676','#FFB900','#FF1744','#2979FF']}]},
-          options:{indexAxis:'y',plugins:{legend:{labels:{color:'#F0F4FF'}}},scales:{x:{min:0,max:1,ticks:{color:'#8892A4'}}}}
-        });
-
-        const gridRes = await api('/api/whatif_grid', {method:'POST', body:JSON.stringify({base_state:base, runs_range:[0,20], wicket_range:[0,3]})});
-        renderWhatIfGrid(gridRes);
-      };
-      document.getElementById('loadBaseState').click();
-    }
-
-    function renderWhatIfGrid(res){
-      const wrap = document.getElementById('whatifGrid');
-      const rows = res.wicket_values.length;
-      const cols = res.runs_values.length;
-      wrap.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-      wrap.innerHTML = '';
-      for(let r=0;r<rows;r++){
-        for(let c=0;c<cols;c++){
-          const v = res.grid[r][c];
-          const g = Math.round(120 + Math.max(0,v)*600);
-          const red = Math.round(120 + Math.max(0,-v)*600);
-          const bg = `rgba(${red},${g},80,.45)`;
-          wrap.insertAdjacentHTML('beforeend', `<div class='whatif-cell' style='background:${bg}'>${v.toFixed(2)}</div>`);
-        }
-      }
-    }
-
-    async function initModule7(){
-      const shap = await api('/api/shap_values?ball_index=84');
-      const container = document.getElementById('shapList');
-      container.innerHTML = '';
-      Object.entries(shap.feature_shap).forEach(([k,v], i) => {
-        const w = Math.min(100, Math.abs(v)*500);
-        const color = v>=0 ? '#00E676' : '#FF1744';
-        const dir = v>=0 ? 'to right' : 'to left';
-        container.insertAdjacentHTML('beforeend', `
-          <div class='shap-row'>
-            <div class='shap-label'>${k}</div>
-            <div style='flex:1; display:flex; ${v>=0?'justify-content:flex-start':'justify-content:flex-end'}'>
-              <div class='shap-bar' style='width:${w}%; background:${color}' title='${k}: ${v.toFixed(4)} ${dir}'></div>
-            </div>
-            <div class='small'>${v.toFixed(4)}</div>
+    <div class="grid-2 mt-4">
+      <div class="glass-card">
+        <div class="card-header"><i data-lucide="database"></i> Dataset Snapshot</div>
+        <div class="grid-2 mt-4">
+          <div class="stat-box">
+            <div class="value" id="dash-matches">...</div>
+            <div class="label">Matches</div>
           </div>
-        `);
-      });
-      document.getElementById('shapBase').textContent = shap.base_value.toFixed(3);
-      document.getElementById('shapPred').textContent = shap.prediction.toFixed(3);
+          <div class="stat-box">
+            <div class="value" id="dash-deliveries">...</div>
+            <div class="label">Deliveries</div>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card">
+        <div class="card-header"><i data-lucide="cpu"></i> Model Architecture</div>
+        <p class="text-muted" style="line-height: 1.6;">Stacking ML Ensemble deployed via FastAPI. Combines Random Forest, Gradient Boosting, and XGBoost with a Logistic Meta-Learner.</p>
+        <div class="mt-4 flex" style="gap: 1rem;">
+          <span class="badge badge-primary">Mode: ml_only</span>
+          <span class="badge badge-warning" id="dash-threshold">Threshold: 0.34</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
-      const imp = await api('/api/global_importance');
-      if(state.charts.imp) state.charts.imp.destroy();
-      state.charts.imp = new Chart(document.getElementById('globalImpChart'), {
-        type:'bar',
-        data:{labels:imp.features.slice(0,12), datasets:[{label:'Mean |SHAP|', data:imp.mean_shap.slice(0,12), backgroundColor:'rgba(255,185,0,.6)'}]},
-        options:{plugins:{legend:{labels:{color:'#F0F4FF'}}},scales:{x:{ticks:{color:'#8892A4'}},y:{ticks:{color:'#8892A4'}}}}
-      });
+  <section id="s-live" class="section">
+    <div class="flex justify-between items-center" style="margin-bottom: 2rem;">
+      <div>
+        <h1 class="text-3xl">Live Match Intelligence</h1>
+        <p class="text-muted mt-2">Real-time ball-by-ball win probability powered by stacking ML.</p>
+      </div>
+      <button class="btn btn-primary" onclick="predictLive()"><i data-lucide="refresh-cw"></i> Predict</button>
+    </div>
 
-      document.getElementById('researchBtn').onclick = async () => {
-        const out = await api('/api/research_summary', {method:'POST', body:JSON.stringify({context:{project:'IPL Win Probability'}})});
-        document.getElementById('researchOut').textContent = out.summary;
-      };
-      document.getElementById('openapiBtn').onclick = async () => {
-        const out = await api('/api/openapi_yaml');
-        const blob = new Blob([out.yaml], {type:'text/yaml'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'openapi_spec.yaml';
-        a.click();
-      };
+    <div class="grid-2">
+      <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;">
+        <div class="card-header" style="align-self: flex-start; margin-bottom: 2rem;"><i data-lucide="target"></i> Win Probability</div>
+        <div class="gauge-container">
+          <div class="gauge-bg"></div>
+          <div class="gauge-fill" id="live-gauge"></div>
+          <div class="gauge-center">
+            <div class="gauge-value" id="live-prob">--%</div>
+          </div>
+        </div>
+        
+        <div class="flex" style="gap: 2rem; margin-top: 3rem;">
+          <div class="text-center">
+            <div class="text-sm text-muted">Required Run Rate</div>
+            <div class="text-xl font-bold mt-1 text-gold" id="live-rrr">--</div>
+          </div>
+          <div class="text-center">
+            <div class="text-sm text-muted">Current Run Rate</div>
+            <div class="text-xl font-bold mt-1 text-primary" id="live-crr">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="card-header"><i data-lucide="sliders"></i> Match State Inputs</div>
+        <div class="grid-2">
+          <div class="input-group"><label>Overs Remaining</label><input type="number" id="inp_ov" class="form-control" value="8"></div>
+          <div class="input-group"><label>Wickets Remaining</label><input type="number" id="inp_wk" class="form-control" value="6"></div>
+          <div class="input-group"><label>Cumulative Runs</label><input type="number" id="inp_runs" class="form-control" value="112"></div>
+          <div class="input-group"><label>Balls Remaining</label><input type="number" id="inp_balls" class="form-control" value="48"></div>
+          <div class="input-group"><label>Target</label><input type="number" id="inp_target" class="form-control" value="175"></div>
+          <div class="input-group"><label>Runs Last 6</label><input type="number" id="inp_r6" class="form-control" value="10"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-sim" class="section">
+    <div class="flex justify-between items-center" style="margin-bottom: 2rem;">
+      <div>
+        <h1 class="text-3xl">Simulation Lab</h1>
+        <p class="text-muted mt-2">Counterfactual "What-If" Analysis to quantify strategic impact.</p>
+      </div>
+      <button class="btn btn-primary" onclick="runSim()"><i data-lucide="play"></i> Run Scenarios</button>
+    </div>
+
+    <div class="grid-2">
+      <div class="glass-card">
+        <div class="card-header"><i data-lucide="edit-3"></i> Manual Scenario Inputs</div>
+        <div class="grid-2">
+          <div class="input-group"><label>Runs Δ</label><input type="number" id="sim_runs" class="form-control" value="12"></div>
+          <div class="input-group"><label>Balls Δ</label><input type="number" id="sim_balls" class="form-control" value="6"></div>
+          <div class="input-group"><label>Wickets Δ</label><input type="number" id="sim_wkts" class="form-control" value="0"></div>
+          <div class="input-group"><label>Scenario Name</label><input type="text" id="sim_name" class="form-control" value="Custom Scenario"></div>
+        </div>
+      </div>
+      <div class="glass-card">
+        <div class="card-header"><i data-lucide="bar-chart-3"></i> Outcome Impact</div>
+        <canvas id="simChart" height="200"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-timeline" class="section">
+    <h1 class="text-3xl mb-2">Momentum Timeline</h1>
+    <p class="text-muted mb-4">Ball-by-ball win probability and pressure index.</p>
+    
+    <div class="glass-card">
+      <div class="flex justify-between items-center mb-4">
+        <div class="input-group" style="margin:0; width: 200px;">
+          <input type="number" id="tl_match_id" class="form-control" placeholder="Match ID" value="1">
+        </div>
+        <button class="btn btn-primary" onclick="loadTimeline()"><i data-lucide="download"></i> Load Timeline</button>
+      </div>
+      <canvas id="timelineChart" height="120"></canvas>
+    </div>
+  </section>
+
+  <section id="s-shap" class="section">
+    <h1 class="text-3xl mb-2">Model Explainability (SHAP)</h1>
+    <p class="text-muted mb-4">Understanding model predictions through feature attribution.</p>
+    
+    <div class="grid-2">
+      <div class="glass-card">
+        <div class="card-header"><i data-lucide="network"></i> Global Importance</div>
+        <canvas id="shapChart" height="250"></canvas>
+      </div>
+      <div class="glass-card">
+        <div class="card-header"><i data-lucide="info"></i> Interpretability Insight</div>
+        <p class="text-muted" style="line-height: 1.8;">
+          The model correctly prioritizes <strong>Required Run Rate</strong> and <strong>Overs Remaining</strong> over static runs scored.
+          This indicates the model has learned the dynamic nature of chasing, relying on contextual pressure rather than raw totals.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="s-mlops" class="section">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-3xl">MLOps Governance</h1>
+      <button class="btn btn-outline" onclick="checkMonitor()"><i data-lucide="refresh-ccw"></i> Check Status</button>
+    </div>
+    
+    <div class="grid-3 mb-4">
+      <div class="glass-card stat-box">
+        <div class="value" id="mlops-status">--</div>
+        <div class="label">System Action</div>
+      </div>
+      <div class="glass-card stat-box">
+        <div class="value" id="mlops-auc">--</div>
+        <div class="label">Rolling AUC</div>
+      </div>
+      <div class="glass-card stat-box">
+        <div class="value" id="mlops-drift">--</div>
+        <div class="label">Features Drifted</div>
+      </div>
+    </div>
+    
+    <div class="glass-card">
+      <div class="card-header"><i data-lucide="history"></i> Audit Log</div>
+      <table id="auditTable">
+        <thead><tr><th>Time</th><th>Action</th><th>Drift Flag</th><th>Perf Flag</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="s-franchise" class="section">
+    <h1 class="text-3xl mb-2">Franchise Intelligence</h1>
+    <p class="text-muted mb-4">Strategic insights and export tools for teams.</p>
+    
+    <div class="glass-card mb-4">
+      <div class="flex gap-4 mb-4">
+        <select id="fran_team" class="form-control" style="width:150px;">
+          <option>CSK</option><option>MI</option><option>RCB</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadFranchise()"><i data-lucide="search"></i> Analyze</button>
+      </div>
+      
+      <div class="grid-2">
+        <div>
+          <h3 class="text-xl mb-4 text-gold">Phase Dominance (Batting vs Bowling)</h3>
+          <canvas id="franChart" height="200"></canvas>
+        </div>
+        <div>
+          <h3 class="text-xl mb-4 text-gold">Tactical Recommendation</h3>
+          <div class="glass-card" style="background: rgba(251,191,36,0.05); border-color: rgba(251,191,36,0.2);">
+            <p id="fran-insight" class="text-muted" style="line-height: 1.8;">Run analysis to generate strategy insights...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  lucide.createIcons();
+
+  function switchSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://127.0.0.1:8000' : window.location.origin;
+  let charts = {};
+
+  async function api(path, opts={}) {
+    try {
+      const r = await fetch(API + path, {
+        headers: { 'Content-Type': 'application/json', ...opts.headers },
+        body: opts.body,
+        method: opts.method || 'GET'
+      });
+      if (!r.ok) throw new Error("HTTP error");
+      return await r.json();
+    } catch(e) {
+      console.error(e);
+      return null;
+    }
+  }
+
+  async function init() {
+    const health = await api('/api/health');
+    const badge = document.getElementById('apiStatus');
+    if (health && health.status === 'ok') {
+      badge.innerText = 'API Online';
+      badge.className = 'badge badge-success';
+    } else {
+      badge.innerText = 'API Offline';
+      badge.className = 'badge badge-danger';
     }
 
-    async function init(){
-      initModule1();
-      await initModule2();
-      initModule3();
-      await initModule4();
-      await initModule5();
-      initModule6();
-      await initModule7();
+    // Load Metadata
+    const meta = await api('/api/model_metadata');
+    if(meta) {
+      document.getElementById('dash-version').innerText = meta.model_version;
+      document.getElementById('dash-acc').innerText = (meta.test_accuracy * 100).toFixed(2) + '%';
+      document.getElementById('dash-auc').innerText = meta.test_roc_auc.toFixed(4);
+      document.getElementById('dash-feat').innerText = meta.feature_count;
+      document.getElementById('dash-threshold').innerText = 'Threshold: ' + meta.hybrid_threshold.toFixed(2);
     }
 
-    init();
-  </script>
+    // Load Data Stats
+    const stats = await api('/api/data_stats');
+    if(stats) {
+      document.getElementById('dash-matches').innerText = stats.matches_rows.toLocaleString();
+      document.getElementById('dash-deliveries').innerText = stats.deliveries_rows.toLocaleString();
+    }
+
+    predictLive();
+    initShapChart();
+    checkMonitor();
+  }
+
+  async function predictLive() {
+    const payload = {
+      overs_remaining: parseFloat(document.getElementById('inp_ov').value) || 8,
+      wickets_remaining: parseInt(document.getElementById('inp_wk').value) || 6,
+      cumulative_runs: parseInt(document.getElementById('inp_runs').value) || 112,
+      balls_remaining: parseInt(document.getElementById('inp_balls').value) || 48,
+      target: parseInt(document.getElementById('inp_target').value) || 175,
+      runs_last_6: parseInt(document.getElementById('inp_r6').value) || 10,
+      match_phase: document.getElementById('inp_phase') ? document.getElementById('inp_phase').value : 'Middle'
+    };
+    
+    const res = await api('/api/predict', { method: 'POST', body: JSON.stringify(payload) });
+    if(res) {
+      const p = res.win_probability;
+      const gauge = document.getElementById('live-gauge');
+      const deg = 45 + (p * 180);
+      gauge.style.transform = `rotate(${deg}deg)`;
+      document.getElementById('live-prob').innerText = (p * 100).toFixed(1) + '%';
+      
+      document.getElementById('live-rrr').innerText = res.derived.required_run_rate.toFixed(1);
+      document.getElementById('live-crr').innerText = res.derived.current_run_rate.toFixed(1);
+    }
+  }
+
+  async function runSim() {
+    const payload = {
+      base_state: {
+        overs_remaining: 8, wickets_remaining: 6, cumulative_runs: 112, balls_remaining: 48,
+        target: 175, runs_last_6: 10, match_phase: 'Middle'
+      },
+      scenarios: [
+        {
+          name: document.getElementById('sim_name').value || 'Custom', 
+          runs_delta: parseInt(document.getElementById('sim_runs').value) || 0, 
+          balls_delta: parseInt(document.getElementById('sim_balls').value) || 0, 
+          wicket_delta: parseInt(document.getElementById('sim_wkts').value) || 0
+        }
+      ]
+    };
+    
+    const res = await api('/api/counterfactual', { method: 'POST', body: JSON.stringify(payload) });
+    if(res) {
+      const ctx = document.getElementById('simChart').getContext('2d');
+      if(charts.sim) charts.sim.destroy();
+      charts.sim = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Base State', ...Object.keys(res.results)],
+          datasets: [{
+            label: 'Win Prob (%)',
+            data: [(res.base_prob * 100).toFixed(1), ...Object.values(res.results).map(v => (v*100).toFixed(1))],
+            backgroundColor: ['#64748b', '#10b981']
+          }]
+        },
+        options: { responsive: true, scales: { y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+      });
+    }
+  }
+
+  async function loadTimeline() {
+    const mid = document.getElementById('tl_match_id').value || 1;
+    const res = await api('/api/match_timeline?match_id=' + mid);
+    if(res && res.length > 0) {
+      const ctx = document.getElementById('timelineChart').getContext('2d');
+      if(charts.tl) charts.tl.destroy();
+      charts.tl = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: res.map(d => d.ball),
+          datasets: [
+            { label: 'Win Probability', data: res.map(d => d.win_prob), borderColor: '#fbbf24', tension: 0.3, pointRadius: 0 },
+            { label: 'Pressure Index', data: res.map(d => d.pressure), borderColor: '#ef4444', borderDash: [5,5], tension: 0.3, pointRadius: 0, hidden: true }
+          ]
+        },
+        options: { responsive: true, scales: { y: { min: 0, max: 1, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } }
+      });
+    }
+  }
+
+  async function initShapChart() {
+    const res = await api('/api/global_importance');
+    if(res) {
+      const ctx = document.getElementById('shapChart').getContext('2d');
+      if(charts.shap) charts.shap.destroy();
+      charts.shap = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: res.features.slice(0, 5),
+          datasets: [{ label: 'Mean |SHAP|', data: res.mean_shap.slice(0, 5), backgroundColor: '#8b5cf6', borderRadius: 4 }]
+        },
+        options: { indexAxis: 'y', responsive: true, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false } } } }
+      });
+    }
+  }
+
+  async function checkMonitor() {
+    const res = await api('/api/monitor_status');
+    if(res) {
+      document.getElementById('mlops-status').innerText = res.maintenance_action;
+      document.getElementById('mlops-status').className = res.drift_flag ? 'value text-danger' : 'value text-success';
+      document.getElementById('mlops-auc').innerText = res.roc_auc.toFixed(4);
+      document.getElementById('mlops-drift').innerText = res.drift_feature_count;
+    }
+    const log = await api('/api/audit_log');
+    if(log) {
+      document.querySelector('#auditTable tbody').innerHTML = log.slice(0,5).map(l => `
+        <tr>
+          <td>${new Date(l.timestamp).toLocaleTimeString()}</td>
+          <td>${l.action}</td>
+          <td><span class="badge ${l.drift_flag ? 'badge-danger' : 'badge-success'}">${l.drift_flag}</span></td>
+          <td><span class="badge ${l.performance_flag ? 'badge-danger' : 'badge-success'}">${l.performance_flag}</span></td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  async function loadFranchise() {
+    const team = document.getElementById('fran_team').value;
+    const res = await api('/api/franchise_stats?team=' + team);
+    if(res) {
+      const ctx = document.getElementById('franChart').getContext('2d');
+      if(charts.fran) charts.fran.destroy();
+      charts.fran = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['Powerplay Bat', 'Middle Bat', 'Death Bat', 'Powerplay Bowl', 'Death Bowl'],
+          datasets: [{
+            label: team,
+            data: [res.phase_win_probs.batting.Powerplay, res.phase_win_probs.batting.Middle, res.phase_win_probs.batting.Death, res.phase_win_probs.bowling.Powerplay, res.phase_win_probs.bowling.Death],
+            backgroundColor: 'rgba(251,191,36,0.2)',
+            borderColor: '#fbbf24',
+            pointBackgroundColor: '#fbbf24'
+          }]
+        },
+        options: { scales: { r: { angleLines: { color: 'rgba(255,255,255,0.1)' }, grid: { color: 'rgba(255,255,255,0.1)' }, pointLabels: { color: '#94a3b8' }, ticks: { display: false } } } }
+      });
+      
+      const insight = await api('/api/franchise_insight', { method: 'POST', body: JSON.stringify({ team: team, stats_summary: {} }) });
+      if(insight) document.getElementById('fran-insight').innerText = insight.insight_text;
+    }
+  }
+
+  window.onload = init;
+</script>
 </body>
 </html>
