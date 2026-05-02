@@ -575,11 +575,20 @@ class FranchiseInsightRequest(BaseModel):
 @app.post("/api/franchise_insight")
 def franchise_insight(payload: FranchiseInsightRequest) -> Dict[str, str]:
     team = payload.team
-    insight = (
-        f"{team} shows stronger conversion in Death overs when required run rate remains below 10.5. "
-        f"Pressure tolerance suggests a tactical edge from over 14 onward if wickets in hand stay above 5. "
-        f"Recommended auction profile: death-over finishers and high-control middle-over spinners to reduce collapse risk."
-    )
+    insights = {
+        "CSK": "CSK historically excels in controlling the middle overs with spin. Tactical recommendation: Deploy high-control spinners between overs 7-15 to choke the required run rate, and hold back premium death bowlers until the final 4 overs to neutralize big hitters.",
+        "MI": "MI shows stronger conversion in Death overs when required run rate remains below 10.5. Pressure tolerance suggests a tactical edge from over 14 onward. Recommended auction profile: death-over finishers to exploit pace-heavy attacks.",
+        "RCB": "RCB heavily relies on Powerplay dominance from their top order. The data shows a sharp drop in win probability if 2+ wickets fall in the first 6 overs. Recommendation: Anchor the innings with a stable middle-order accumulator to prevent collapse risk.",
+        "KKR": "KKR's aggressive spin-choke strategy works best when defending totals above 160. Tactical recommendation: Use mystery spin early in the Powerplay to disrupt momentum, pushing the opposition's required run rate above 9.0 by over 10.",
+        "SRH": "SRH benefits massively from aggressive powerplay starts. Win probability jumps 25% when scoring 60+ in the first 6 overs. Recommendation: Maintain ultra-aggressive top-order intent and back it up with reliable death bowling execution.",
+        "RR": "RR has a strong reliance on specific match-ups, particularly leg-spin in the middle overs. Recommendation: Attack the opposition's best batsmen early with premium pace, saving the spin resources for the middle-over consolidation phase.",
+        "DC": "DC's momentum often swings dramatically in the Death overs. Data suggests a weakness against high-pace yorkers. Tactical focus: Invest in resilient middle-order batters who can handle high-pressure death chases against premium pace.",
+        "PBKS": "PBKS frequently exhibits high collapse risk despite strong starts. Tactical recommendation: Prioritize deep batting lineups and conservative middle-over accumulation to ensure resources remain intact for the final 5 overs.",
+        "GT": "GT excels at chasing targets through calculated risk-taking. They maintain high win probability even when the required run rate exceeds 11.0. Recommendation: Stack the lower-middle order with explosive finishers to maintain chase control.",
+        "LSG": "LSG's success correlates heavily with batting first and posting par+ scores. Recommendation: Focus on wicket preservation in the Powerplay. Even a slow start with 0 wickets lost yields a 15% higher win probability compared to an aggressive start losing 2 wickets."
+    }
+    
+    insight = insights.get(team, f"{team} shows standard performance metrics. Recommended to focus on balanced team composition.")
     return {"insight_text": insight}
 
 

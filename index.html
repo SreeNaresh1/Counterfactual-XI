@@ -28,7 +28,7 @@
     font-family: 'Outfit', sans-serif;
     background-color: var(--bg);
     color: var(--text);
-    min-height: 100vh;
+    height: 100vh; /* Fixed scroll issue: Changed from min-height to height */
     display: flex;
     overflow: hidden;
   }
@@ -318,8 +318,8 @@
           <div class="input-group"><label>Cum. Runs</label><input type="number" id="inp_runs" class="form-control" value="112"></div>
           <div class="input-group"><label>Balls Rem</label><input type="number" id="inp_balls" class="form-control" value="48"></div>
           <div class="input-group"><label>Target</label><input type="number" id="inp_target" class="form-control" value="175"></div>
-          <div class="input-group"><label>Runs Last 6</label><input type="number" id="inp_r6" class="form-control" value="45"></div>
-          <div class="input-group"><label>Wickets Last 6</label><input type="number" id="inp_w6" class="form-control" value="1"></div>
+          <div class="input-group"><label>Runs Last 6 Balls</label><input type="number" id="inp_r6" class="form-control" value="10"></div>
+          <div class="input-group"><label>Wickets Last 6 Balls</label><input type="number" id="inp_w6" class="form-control" value="0"></div>
           <div class="input-group"><label>Phase</label>
             <select id="inp_phase" class="form-control"><option>Powerplay</option><option selected>Middle</option><option>Death</option></select>
           </div>
@@ -553,8 +553,8 @@
       cumulative_runs: parseInt(document.getElementById('inp_runs').value) || 112,
       balls_remaining: parseInt(document.getElementById('inp_balls').value) || 48,
       target: parseInt(document.getElementById('inp_target').value) || 175,
-      runs_last_6: parseInt(document.getElementById('inp_r6').value) || 45,
-      wickets_last_6: parseInt(document.getElementById('inp_w6').value) || 1,
+      runs_last_6: parseInt(document.getElementById('inp_r6').value) || 10,
+      wickets_last_6: parseInt(document.getElementById('inp_w6').value) || 0,
       match_phase: document.getElementById('inp_phase') ? document.getElementById('inp_phase').value : 'Middle',
       pressure_index: parseFloat(document.getElementById('inp_pi').value) || 0.6
     };
@@ -598,7 +598,7 @@
         cumulative_runs: parseInt(document.getElementById('sim_base_runs').value) || 112,
         balls_remaining: parseInt(document.getElementById('sim_base_balls').value) || 48,
         target: parseInt(document.getElementById('sim_base_target').value) || 175,
-        runs_last_6: 40,
+        runs_last_6: 12,
         match_phase: document.getElementById('sim_base_phase').value || 'Middle'
       },
       scenarios: [
