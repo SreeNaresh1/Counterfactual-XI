@@ -279,11 +279,25 @@ def _derive_features(state: MatchState) -> Dict[str, float]:
 
 def _simulate_prob(feat: Dict[str, float]) -> float:
     base = 0.5
-    base += 0.08 * np.tanh((feat["current_run_rate"] - feat["required_run_rate"]) / 2)
-    base += 0.10 * (feat["resource_remaining"] - 0.5)
-    base += 0.06 * feat["momentum_short"]
-    base -= 0.10 * feat["collapse_risk"]
-    base += 0.04 * feat["boundary_intensity"]
+    
+    # Run Rate Pressure
+    rr_diff = feat["current_run_rate"] - feat["required_run_rate"]
+    base += 0.25 * np.tanh(rr_diff / 3.0)
+    
+    # Resource Pressure
+    base += 0.35 * (feat["resource_remaining"] - 0.5)
+    
+    # Momentum & Collapse
+    base += 0.10 * feat["momentum_short"]
+    base -= 0.15 * feat["collapse_risk"]
+    base += 0.05 * feat["boundary_intensity"]
+    
+    # Extreme Situation Penalties (e.g. 1 wicket left, high RRR)
+    if feat["wickets_remaining"] <= 2 and feat["required_run_rate"] > 10:
+        base -= 0.30
+    elif feat["wickets_remaining"] >= 8 and feat["required_run_rate"] <= 8:
+        base += 0.20
+        
     noise = rng.normal(0, 0.01)
     return _clamp_prob(base + noise)
 
@@ -541,7 +555,12 @@ def franchise_stats(team: str = Query("CSK"), season: Optional[str] = Query("202
         "win_avg_pressure": float(np.clip(s_rng.normal(0.62, 0.1), 0.3, 0.9)),
         "loss_avg_pressure": float(np.clip(s_rng.normal(0.74, 0.1), 0.4, 1.0)),
     }
-    seasons = list(range(2010, 2025))
+    # Handle GT and LSG seasons (formed in 2022)
+    if team in ["GT", "LSG"]:
+        seasons = list(range(2022, 2025))
+    else:
+        seasons = list(range(2010, 2025))
+    
     collapse_risk = [{"season": y, "collapse_freq": float(np.clip(s_rng.normal(0.18, 0.05), 0.05, 0.4))} for y in seasons]
     rrr_benchmarks = {
         "Powerplay": {"won_rrr": float(np.clip(s_rng.normal(7.8, 0.8), 5, 12)), "lost_rrr": float(np.clip(s_rng.normal(9.4, 1.0), 6, 14))},
@@ -576,19 +595,19 @@ class FranchiseInsightRequest(BaseModel):
 def franchise_insight(payload: FranchiseInsightRequest) -> Dict[str, str]:
     team = payload.team
     insights = {
-        "CSK": "CSK historically excels in controlling the middle overs with spin. Tactical recommendation: Deploy high-control spinners between overs 7-15 to choke the required run rate, and hold back premium death bowlers until the final 4 overs to neutralize big hitters.",
-        "MI": "MI shows stronger conversion in Death overs when required run rate remains below 10.5. Pressure tolerance suggests a tactical edge from over 14 onward. Recommended auction profile: death-over finishers to exploit pace-heavy attacks.",
-        "RCB": "RCB heavily relies on Powerplay dominance from their top order. The data shows a sharp drop in win probability if 2+ wickets fall in the first 6 overs. Recommendation: Anchor the innings with a stable middle-order accumulator to prevent collapse risk.",
-        "KKR": "KKR's aggressive spin-choke strategy works best when defending totals above 160. Tactical recommendation: Use mystery spin early in the Powerplay to disrupt momentum, pushing the opposition's required run rate above 9.0 by over 10.",
-        "SRH": "SRH benefits massively from aggressive powerplay starts. Win probability jumps 25% when scoring 60+ in the first 6 overs. Recommendation: Maintain ultra-aggressive top-order intent and back it up with reliable death bowling execution.",
-        "RR": "RR has a strong reliance on specific match-ups, particularly leg-spin in the middle overs. Recommendation: Attack the opposition's best batsmen early with premium pace, saving the spin resources for the middle-over consolidation phase.",
-        "DC": "DC's momentum often swings dramatically in the Death overs. Data suggests a weakness against high-pace yorkers. Tactical focus: Invest in resilient middle-order batters who can handle high-pressure death chases against premium pace.",
-        "PBKS": "PBKS frequently exhibits high collapse risk despite strong starts. Tactical recommendation: Prioritize deep batting lineups and conservative middle-over accumulation to ensure resources remain intact for the final 5 overs.",
-        "GT": "GT excels at chasing targets through calculated risk-taking. They maintain high win probability even when the required run rate exceeds 11.0. Recommendation: Stack the lower-middle order with explosive finishers to maintain chase control.",
-        "LSG": "LSG's success correlates heavily with batting first and posting par+ scores. Recommendation: Focus on wicket preservation in the Powerplay. Even a slow start with 0 wickets lost yields a 15% higher win probability compared to an aggressive start losing 2 wickets."
+        "CSK": "🔹 Primary Tactic: Spin-Choke Protocol. Deploy high-control spinners between overs 7-15 to force a rising Required Run Rate.\n🔹 Risk Factor: Over-reliance on aging core during high-pace death chases.\n🔹 Strategic Move: Hold back 2 overs of premium pace exclusively for overs 18 and 20.",
+        "MI": "🔹 Primary Tactic: Death Over Overdrive. Capitalize on low RRR (<10.5) with aggressive power-hitters.\n🔹 Risk Factor: Powerplay swing vulnerability against left-arm seamers.\n🔹 Strategic Move: Anchor the top order, allowing finishers to exploit pace-heavy attacks late in the innings.",
+        "RCB": "🔹 Primary Tactic: Top-Heavy Onslaught. Win probability surges when scoring 55+ in the Powerplay.\n🔹 Risk Factor: Extreme collapse vulnerability if 2+ wickets fall early.\n🔹 Strategic Move: Introduce a dynamic accumulator at No. 4 to absorb pressure and bridge to the death overs.",
+        "KKR": "🔹 Primary Tactic: Mystery Spin Disruption. Defend totals by deploying mystery spinners in the Powerplay to break momentum.\n🔹 Risk Factor: Predictable pace bowling at the death.\n🔹 Strategic Move: Keep RRR above 9.0 by over 10 to force opposition into high-risk shots against spin.",
+        "SRH": "🔹 Primary Tactic: Hyper-Aggressive Openers. Front-load scoring to maximize Powerplay field restrictions.\n🔹 Risk Factor: Middle-order stagnation against disciplined spin.\n🔹 Strategic Move: Use floating pinch-hitters against specific bowling matchups to maintain the scoring rate.",
+        "RR": "🔹 Primary Tactic: Matchup-Driven Bowling. Attack the opposition's best batters early with premium pace.\n🔹 Risk Factor: Death bowling consistency when defending under 170.\n🔹 Strategic Move: Save specialized leg-spin resources strictly for the middle-over consolidation phase to trap right-handers.",
+        "DC": "🔹 Primary Tactic: Middle-Over Acceleration. Exploit the phase between 11-15 with aggressive domestic batters.\n🔹 Risk Factor: High-pace yorkers dramatically swing momentum against DC in the Death overs.\n🔹 Strategic Move: Invest in resilient finishers who specialize in low full-toss and yorker conversion.",
+        "PBKS": "🔹 Primary Tactic: Explosive Starts. Consistently score fast out of the gate.\n🔹 Risk Factor: The highest structural collapse risk in the tournament post-Powerplay.\n🔹 Strategic Move: Prioritize extreme depth in the batting lineup and enforce conservative middle-over accumulation.",
+        "GT": "🔹 Primary Tactic: Calculated Chase Mastery. Maintain high win probability even when RRR exceeds 11.0 through calm finishing.\n🔹 Risk Factor: Setting targets. Win probability drops when defending par scores.\n🔹 Strategic Move: Stack the lower-middle order with multi-dimensional finishers and retain wickets for the final 5.",
+        "LSG": "🔹 Primary Tactic: Wicket Preservation. A slow start (0 wickets lost) yields a 15% higher win probability than an aggressive start losing 2 wickets.\n🔹 Risk Factor: Sluggish run rates putting immense pressure on the final 4 overs.\n🔹 Strategic Move: Focus on posting par+ scores by accelerating only after over 14 with wickets in hand."
     }
     
-    insight = insights.get(team, f"{team} shows standard performance metrics. Recommended to focus on balanced team composition.")
+    insight = insights.get(team, f"🔹 Primary Tactic: Balanced approach required for {team}.\n🔹 Risk Factor: Standard deviation in metrics.\n🔹 Strategic Move: Focus on matchup optimizations.")
     return {"insight_text": insight}
 
 
