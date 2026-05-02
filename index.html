@@ -286,36 +286,44 @@
 
     <div class="grid-2">
       <div class="glass-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px;">
-        <div class="card-header" style="align-self: flex-start; margin-bottom: 2rem;"><i data-lucide="target"></i> Win Probability</div>
-        <div class="gauge-container">
-          <div class="gauge-bg"></div>
-          <div class="gauge-fill" id="live-gauge"></div>
-          <div class="gauge-center">
-            <div class="gauge-value" id="live-prob">--%</div>
+        <div class="card-header" style="align-self: flex-start; margin-bottom: 1rem;"><i data-lucide="target"></i> Real-time Win Probability</div>
+        <div style="width: 250px; position: relative;">
+          <canvas id="liveGaugeChart"></canvas>
+          <div style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+            <div class="text-3xl font-bold" id="live-prob">--%</div>
           </div>
         </div>
         
-        <div class="flex" style="gap: 2rem; margin-top: 3rem;">
+        <div class="flex" style="gap: 2rem; margin-top: 2rem;">
           <div class="text-center">
-            <div class="text-sm text-muted">Required Run Rate</div>
+            <div class="text-sm text-muted">Required RR</div>
             <div class="text-xl font-bold mt-1 text-gold" id="live-rrr">--</div>
           </div>
           <div class="text-center">
-            <div class="text-sm text-muted">Current Run Rate</div>
+            <div class="text-sm text-muted">Current RR</div>
             <div class="text-xl font-bold mt-1 text-primary" id="live-crr">--</div>
+          </div>
+          <div class="text-center">
+            <div class="text-sm text-muted">Resource Rem</div>
+            <div class="text-xl font-bold mt-1 text-success" id="live-res">--</div>
           </div>
         </div>
       </div>
 
       <div class="glass-card">
         <div class="card-header"><i data-lucide="sliders"></i> Match State Inputs</div>
-        <div class="grid-2">
-          <div class="input-group"><label>Overs Remaining</label><input type="number" id="inp_ov" class="form-control" value="8"></div>
-          <div class="input-group"><label>Wickets Remaining</label><input type="number" id="inp_wk" class="form-control" value="6"></div>
-          <div class="input-group"><label>Cumulative Runs</label><input type="number" id="inp_runs" class="form-control" value="112"></div>
-          <div class="input-group"><label>Balls Remaining</label><input type="number" id="inp_balls" class="form-control" value="48"></div>
+        <div class="grid-3">
+          <div class="input-group"><label>Overs Rem</label><input type="number" id="inp_ov" class="form-control" value="8"></div>
+          <div class="input-group"><label>Wickets Rem</label><input type="number" id="inp_wk" class="form-control" value="6"></div>
+          <div class="input-group"><label>Cum. Runs</label><input type="number" id="inp_runs" class="form-control" value="112"></div>
+          <div class="input-group"><label>Balls Rem</label><input type="number" id="inp_balls" class="form-control" value="48"></div>
           <div class="input-group"><label>Target</label><input type="number" id="inp_target" class="form-control" value="175"></div>
-          <div class="input-group"><label>Runs Last 6</label><input type="number" id="inp_r6" class="form-control" value="10"></div>
+          <div class="input-group"><label>Runs Last 6</label><input type="number" id="inp_r6" class="form-control" value="45"></div>
+          <div class="input-group"><label>Wickets Last 6</label><input type="number" id="inp_w6" class="form-control" value="1"></div>
+          <div class="input-group"><label>Phase</label>
+            <select id="inp_phase" class="form-control"><option>Powerplay</option><option selected>Middle</option><option>Death</option></select>
+          </div>
+          <div class="input-group"><label>Pressure Index</label><input type="number" id="inp_pi" class="form-control" value="0.6" step="0.1"></div>
         </div>
       </div>
     </div>
@@ -332,17 +340,31 @@
 
     <div class="grid-2">
       <div class="glass-card">
-        <div class="card-header"><i data-lucide="edit-3"></i> Manual Scenario Inputs</div>
-        <div class="grid-2">
+        <div class="card-header"><i data-lucide="settings"></i> Base Match State</div>
+        <div class="grid-3 mb-4">
+          <div class="input-group"><label>Overs Rem</label><input type="number" id="sim_base_ov" class="form-control" value="8"></div>
+          <div class="input-group"><label>Wickets Rem</label><input type="number" id="sim_base_wk" class="form-control" value="6"></div>
+          <div class="input-group"><label>Target</label><input type="number" id="sim_base_target" class="form-control" value="175"></div>
+          <div class="input-group"><label>Cumulative Runs</label><input type="number" id="sim_base_runs" class="form-control" value="112"></div>
+          <div class="input-group"><label>Balls Rem</label><input type="number" id="sim_base_balls" class="form-control" value="48"></div>
+          <div class="input-group"><label>Phase</label>
+            <select id="sim_base_phase" class="form-control"><option>Powerplay</option><option selected>Middle</option><option>Death</option></select>
+          </div>
+        </div>
+        <div class="card-header" style="font-size: 1rem;"><i data-lucide="edit-3"></i> Scenario Intervention</div>
+        <div class="grid-3">
           <div class="input-group"><label>Runs Δ</label><input type="number" id="sim_runs" class="form-control" value="12"></div>
           <div class="input-group"><label>Balls Δ</label><input type="number" id="sim_balls" class="form-control" value="6"></div>
-          <div class="input-group"><label>Wickets Δ</label><input type="number" id="sim_wkts" class="form-control" value="0"></div>
-          <div class="input-group"><label>Scenario Name</label><input type="text" id="sim_name" class="form-control" value="Custom Scenario"></div>
+          <div class="input-group"><label>Wickets Δ</label><input type="number" id="sim_wkts" class="form-control" value="1"></div>
         </div>
+        <div class="input-group mt-4"><label>Scenario Name</label><input type="text" id="sim_name" class="form-control" value="Aggressive Intent"></div>
       </div>
       <div class="glass-card">
-        <div class="card-header"><i data-lucide="bar-chart-3"></i> Outcome Impact</div>
-        <canvas id="simChart" height="200"></canvas>
+        <div class="card-header"><i data-lucide="bar-chart-3"></i> Strategic Outcome Impact</div>
+        <div style="height: 250px; display: flex; align-items: center; justify-content: center;">
+          <canvas id="simChart"></canvas>
+        </div>
+        <p class="text-sm text-muted mt-4 text-center">Quantifies the exact shift in win probability caused by the scenario intervention.</p>
       </div>
     </div>
   </section>
@@ -358,7 +380,14 @@
         </div>
         <button class="btn btn-primary" onclick="loadTimeline()"><i data-lucide="download"></i> Load Timeline</button>
       </div>
-      <canvas id="timelineChart" height="120"></canvas>
+      <div style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 1rem;">
+        <canvas id="timelineChart" height="100"></canvas>
+      </div>
+      <div class="flex gap-4 mt-4 text-sm text-muted">
+         <div><span style="display:inline-block; width:12px; height:12px; background:#fbbf24; border-radius:50%; margin-right:4px;"></span> Win Probability</div>
+         <div><span style="display:inline-block; width:12px; height:12px; background:#ef4444; border-radius:50%; margin-right:4px;"></span> Pressure Index</div>
+         <div><i data-lucide="info" style="width:14px; height:14px; vertical-align:text-bottom;"></i> Hover over points to see Runs/Wickets</div>
+      </div>
     </div>
   </section>
 
@@ -372,10 +401,18 @@
         <canvas id="shapChart" height="250"></canvas>
       </div>
       <div class="glass-card">
+        <div class="card-header"><i data-lucide="microscope"></i> Local SHAP Analysis</div>
+        <div class="flex items-center gap-2 mb-4">
+          <label class="text-sm text-muted">Ball Index:</label>
+          <input type="number" id="shap_ball_idx" class="form-control" value="0" style="width: 100px; padding: 0.4rem;">
+          <button class="btn btn-primary" onclick="loadLocalShap()" style="padding: 0.4rem 1rem;"><i data-lucide="search"></i> Analyze</button>
+        </div>
+        <canvas id="localShapChart" height="180"></canvas>
+      </div>
+      <div class="glass-card" style="grid-column: span 2;">
         <div class="card-header"><i data-lucide="info"></i> Interpretability Insight</div>
         <p class="text-muted" style="line-height: 1.8;">
-          The model correctly prioritizes <strong>Required Run Rate</strong> and <strong>Overs Remaining</strong> over static runs scored.
-          This indicates the model has learned the dynamic nature of chasing, relying on contextual pressure rather than raw totals.
+          The model dynamically assigns importance based on match context. While <strong>Required Run Rate</strong> and <strong>Overs Remaining</strong> generally dominate global importance, local ball-by-ball analysis reveals that <strong>Momentum</strong> and <strong>Pressure Index</strong> strongly influence predictions during critical death-over chases.
         </p>
       </div>
     </div>
@@ -415,24 +452,32 @@
     <h1 class="text-3xl mb-2">Franchise Intelligence</h1>
     <p class="text-muted mb-4">Strategic insights and export tools for teams.</p>
     
-    <div class="glass-card mb-4">
+    <div class="mb-4">
       <div class="flex gap-4 mb-4">
         <select id="fran_team" class="form-control" style="width:150px;">
-          <option>CSK</option><option>MI</option><option>RCB</option>
+          <option>CSK</option><option>MI</option><option>RCB</option><option>KKR</option><option>SRH</option><option>RR</option><option>DC</option><option>PBKS</option><option>GT</option><option>LSG</option>
         </select>
         <button class="btn btn-primary" onclick="loadFranchise()"><i data-lucide="search"></i> Analyze</button>
       </div>
       
       <div class="grid-2">
-        <div>
-          <h3 class="text-xl mb-4 text-gold">Phase Dominance (Batting vs Bowling)</h3>
+        <div class="glass-card">
+          <h3 class="text-xl mb-4 text-gold"><i data-lucide="crosshair"></i> Phase Dominance</h3>
           <canvas id="franChart" height="200"></canvas>
         </div>
-        <div>
-          <h3 class="text-xl mb-4 text-gold">Tactical Recommendation</h3>
-          <div class="glass-card" style="background: rgba(251,191,36,0.05); border-color: rgba(251,191,36,0.2);">
+        <div class="glass-card">
+          <h3 class="text-xl mb-4 text-gold"><i data-lucide="shield-alert"></i> Tactical Recommendation</h3>
+          <div style="background: rgba(251,191,36,0.05); padding: 1rem; border-radius: 0.5rem; border-left: 4px solid var(--gold);">
             <p id="fran-insight" class="text-muted" style="line-height: 1.8;">Run analysis to generate strategy insights...</p>
           </div>
+        </div>
+        <div class="glass-card">
+          <h3 class="text-xl mb-4 text-gold"><i data-lucide="activity"></i> Pressure Metrics</h3>
+          <canvas id="franPressureChart" height="200"></canvas>
+        </div>
+        <div class="glass-card">
+          <h3 class="text-xl mb-4 text-gold"><i data-lucide="trending-down"></i> Collapse Risk Over Time</h3>
+          <canvas id="franCollapseChart" height="200"></canvas>
         </div>
       </div>
     </div>
@@ -508,28 +553,53 @@
       cumulative_runs: parseInt(document.getElementById('inp_runs').value) || 112,
       balls_remaining: parseInt(document.getElementById('inp_balls').value) || 48,
       target: parseInt(document.getElementById('inp_target').value) || 175,
-      runs_last_6: parseInt(document.getElementById('inp_r6').value) || 10,
-      match_phase: document.getElementById('inp_phase') ? document.getElementById('inp_phase').value : 'Middle'
+      runs_last_6: parseInt(document.getElementById('inp_r6').value) || 45,
+      wickets_last_6: parseInt(document.getElementById('inp_w6').value) || 1,
+      match_phase: document.getElementById('inp_phase') ? document.getElementById('inp_phase').value : 'Middle',
+      pressure_index: parseFloat(document.getElementById('inp_pi').value) || 0.6
     };
     
     const res = await api('/api/predict', { method: 'POST', body: JSON.stringify(payload) });
     if(res) {
       const p = res.win_probability;
-      const gauge = document.getElementById('live-gauge');
-      const deg = 45 + (p * 180);
-      gauge.style.transform = `rotate(${deg}deg)`;
+      
+      const ctx = document.getElementById('liveGaugeChart').getContext('2d');
+      if(charts.gauge) charts.gauge.destroy();
+      charts.gauge = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [p * 100, (1 - p) * 100],
+            backgroundColor: ['#fbbf24', 'rgba(255,255,255,0.05)'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          rotation: 270,
+          circumference: 180,
+          cutout: '80%',
+          plugins: { tooltip: { enabled: false }, legend: { display: false } }
+        }
+      });
+      
       document.getElementById('live-prob').innerText = (p * 100).toFixed(1) + '%';
       
       document.getElementById('live-rrr').innerText = res.derived.required_run_rate.toFixed(1);
       document.getElementById('live-crr').innerText = res.derived.current_run_rate.toFixed(1);
+      document.getElementById('live-res').innerText = res.derived.resource_remaining.toFixed(2);
     }
   }
 
   async function runSim() {
     const payload = {
       base_state: {
-        overs_remaining: 8, wickets_remaining: 6, cumulative_runs: 112, balls_remaining: 48,
-        target: 175, runs_last_6: 10, match_phase: 'Middle'
+        overs_remaining: parseFloat(document.getElementById('sim_base_ov').value) || 8,
+        wickets_remaining: parseInt(document.getElementById('sim_base_wk').value) || 6,
+        cumulative_runs: parseInt(document.getElementById('sim_base_runs').value) || 112,
+        balls_remaining: parseInt(document.getElementById('sim_base_balls').value) || 48,
+        target: parseInt(document.getElementById('sim_base_target').value) || 175,
+        runs_last_6: 40,
+        match_phase: document.getElementById('sim_base_phase').value || 'Middle'
       },
       scenarios: [
         {
@@ -552,10 +622,19 @@
           datasets: [{
             label: 'Win Prob (%)',
             data: [(res.base_prob * 100).toFixed(1), ...Object.values(res.results).map(v => (v*100).toFixed(1))],
-            backgroundColor: ['#64748b', '#10b981']
+            backgroundColor: ['rgba(148, 163, 184, 0.5)', '#10b981'],
+            borderRadius: 6
           }]
         },
-        options: { responsive: true, scales: { y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' } },
+            x: { grid: { display: false } }
+          },
+          plugins: { legend: { display: false } }
+        }
       });
     }
   }
@@ -571,11 +650,59 @@
         data: {
           labels: res.map(d => d.ball),
           datasets: [
-            { label: 'Win Probability', data: res.map(d => d.win_prob), borderColor: '#fbbf24', tension: 0.3, pointRadius: 0 },
-            { label: 'Pressure Index', data: res.map(d => d.pressure), borderColor: '#ef4444', borderDash: [5,5], tension: 0.3, pointRadius: 0, hidden: true }
+            { 
+              label: 'Win Probability', 
+              data: res.map(d => d.win_prob), 
+              borderColor: '#fbbf24', 
+              backgroundColor: 'rgba(251, 191, 36, 0.1)',
+              fill: true,
+              tension: 0.4, 
+              pointRadius: 2,
+              yAxisID: 'y'
+            },
+            { 
+              label: 'Pressure Index', 
+              data: res.map(d => d.pressure), 
+              borderColor: '#ef4444', 
+              borderDash: [5,5], 
+              tension: 0.4, 
+              pointRadius: 0, 
+              yAxisID: 'y1'
+            }
           ]
         },
-        options: { responsive: true, scales: { y: { min: 0, max: 1, grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } }
+        options: { 
+          responsive: true, 
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const data = res[ctx.dataIndex];
+                  let label = ctx.dataset.label + ': ' + ctx.raw.toFixed(2);
+                  if (ctx.datasetIndex === 0) {
+                    label += ` | Runs: ${data.runs} | Wicket: ${data.wicket ? 'Yes' : 'No'}`;
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: { 
+            y: { 
+              type: 'linear', display: true, position: 'left', min: 0, max: 1, 
+              grid: { color: 'rgba(255,255,255,0.05)' },
+              title: { display: true, text: 'Win Probability', color: '#94a3b8' }
+            },
+            y1: { 
+              type: 'linear', display: true, position: 'right', min: 0, max: 1, 
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: 'Pressure Index', color: '#94a3b8' }
+            },
+            x: { grid: { display: false } } 
+          } 
+        }
       });
     }
   }
@@ -588,10 +715,38 @@
       charts.shap = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: res.features.slice(0, 5),
-          datasets: [{ label: 'Mean |SHAP|', data: res.mean_shap.slice(0, 5), backgroundColor: '#8b5cf6', borderRadius: 4 }]
+          labels: res.features.slice(0, 10),
+          datasets: [{ label: 'Mean |SHAP|', data: res.mean_shap.slice(0, 10), backgroundColor: '#8b5cf6', borderRadius: 4 }]
         },
-        options: { indexAxis: 'y', responsive: true, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false } } } }
+        options: { indexAxis: 'y', responsive: true, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+      });
+    }
+    loadLocalShap();
+  }
+
+  async function loadLocalShap() {
+    const idx = document.getElementById('shap_ball_idx').value || 0;
+    const res = await api('/api/shap_values?ball_index=' + idx);
+    if(res) {
+      const ctx = document.getElementById('localShapChart').getContext('2d');
+      if(charts.localShap) charts.localShap.destroy();
+      
+      const features = Object.keys(res.feature_shap);
+      const values = Object.values(res.feature_shap);
+      const colors = values.map(v => v >= 0 ? '#10b981' : '#ef4444');
+      
+      charts.localShap = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: features,
+          datasets: [{ label: 'SHAP Value', data: values, backgroundColor: colors, borderRadius: 4 }]
+        },
+        options: { 
+          indexAxis: 'y', 
+          responsive: true, 
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } 
+        }
       });
     }
   }
@@ -628,14 +783,51 @@
         data: {
           labels: ['Powerplay Bat', 'Middle Bat', 'Death Bat', 'Powerplay Bowl', 'Death Bowl'],
           datasets: [{
-            label: team,
+            label: team + ' Dominance',
             data: [res.phase_win_probs.batting.Powerplay, res.phase_win_probs.batting.Middle, res.phase_win_probs.batting.Death, res.phase_win_probs.bowling.Powerplay, res.phase_win_probs.bowling.Death],
             backgroundColor: 'rgba(251,191,36,0.2)',
             borderColor: '#fbbf24',
             pointBackgroundColor: '#fbbf24'
           }]
         },
-        options: { scales: { r: { angleLines: { color: 'rgba(255,255,255,0.1)' }, grid: { color: 'rgba(255,255,255,0.1)' }, pointLabels: { color: '#94a3b8' }, ticks: { display: false } } } }
+        options: { plugins: { legend: { display: false } }, scales: { r: { angleLines: { color: 'rgba(255,255,255,0.1)' }, grid: { color: 'rgba(255,255,255,0.1)' }, pointLabels: { color: '#94a3b8' }, ticks: { display: false } } } }
+      });
+      
+      const pctx = document.getElementById('franPressureChart').getContext('2d');
+      if(charts.franPressure) charts.franPressure.destroy();
+      charts.franPressure = new Chart(pctx, {
+        type: 'polarArea',
+        data: {
+          labels: ['Death Execution', 'Chase Control', 'Wicket Resilience', 'Boundary Pressure', 'Spin Res.', 'Pace Res.'],
+          datasets: [{
+            data: [
+              res.pressure_metrics.death_execution, res.pressure_metrics.chase_control,
+              res.pressure_metrics.wicket_resilience, res.pressure_metrics.boundary_pressure,
+              res.pressure_metrics.spin_resistance, res.pressure_metrics.pace_resistance
+            ],
+            backgroundColor: ['#3b82f688', '#8b5cf688', '#ec489988', '#f43f5e88', '#f9731688', '#eab30888'],
+            borderColor: 'transparent'
+          }]
+        },
+        options: { plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: {size: 10} } } }, scales: { r: { ticks: {display: false}, grid: {color: 'rgba(255,255,255,0.05)'} } } }
+      });
+      
+      const cctx = document.getElementById('franCollapseChart').getContext('2d');
+      if(charts.franCollapse) charts.franCollapse.destroy();
+      charts.franCollapse = new Chart(cctx, {
+        type: 'line',
+        data: {
+          labels: res.collapse_risk.map(d => d.season),
+          datasets: [{
+            label: 'Collapse Freq (%)',
+            data: res.collapse_risk.map(d => (d.collapse_freq * 100).toFixed(1)),
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } }
       });
       
       const insight = await api('/api/franchise_insight', { method: 'POST', body: JSON.stringify({ team: team, stats_summary: {} }) });
