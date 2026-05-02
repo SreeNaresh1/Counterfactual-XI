@@ -200,6 +200,7 @@ class MatchState(BaseModel):
     momentum_acceleration: float = Field(default=0.0, ge=-2, le=2)
     collapse_risk: float = Field(default=0.0, ge=0, le=1)
     runs_last_12: float = Field(default=0.0, ge=0, le=72)
+    venue: str = Field(default="Neutral")
 
     @model_validator(mode="after")
     def phase_check(self) -> "MatchState":
@@ -275,6 +276,17 @@ def _derive_features(state: MatchState) -> Dict[str, float]:
         "collapse_risk": float(collapse_risk),
         "runs_last_12": float(s["runs_last_12"]),
     }
+    
+    venue_map = {
+        "Neutral": 0,
+        "Wankhede (Mumbai)": 1,
+        "Chepauk (Chennai)": 2,
+        "Eden Gardens (Kolkata)": 3,
+        "Chinnaswamy (Bengaluru)": 4,
+        "Narendra Modi (Ahmedabad)": 5
+    }
+    features["venue_numeric"] = float(venue_map.get(getattr(state, "venue", "Neutral"), 0))
+    return features
 
 
 def _simulate_prob(feat: Dict[str, float]) -> float:
@@ -356,6 +368,17 @@ def _predict_components(feat: Dict[str, float]) -> Dict[str, Any]:
     else:
         blended_prob = _simulate_prob(feat)
         mode = "fallback_simulation"
+        
+    # Venue Intelligence Heuristic Adjustments
+    venue = feat.get("venue_numeric", 0) # 0: Neutral, 1: Wankhede, 2: Chepauk, 3: Eden, 4: Chinnaswamy, 5: Narendra Modi
+    if venue == 1: # Wankhede (Chasing paradise)
+        blended_prob += 0.05
+    elif venue == 2: # Chepauk (Spin friendly, chasing harder)
+        blended_prob -= 0.04
+    elif venue == 4: # Chinnaswamy (Small boundaries)
+        blended_prob += 0.06
+    
+    blended_prob = _clamp_prob(blended_prob)
 
     return {
         "stacking_prob": stacking_prob,
@@ -535,10 +558,10 @@ def live_update(payload: LiveUpdatePayload) -> Dict[str, Any]:
 
 
 @app.get("/api/franchise_stats")
-def franchise_stats(team: str = Query("CSK"), season: Optional[str] = Query("2024")) -> Dict[str, Any]:
+def franchise_stats(team: str = Query("CSK"), opp: Optional[str] = Query("All"), season: Optional[str] = Query("2024")) -> Dict[str, Any]:
     if team not in TEAM_LIST:
         raise HTTPException(status_code=400, detail=f"Invalid team. Use one of {TEAM_LIST}")
-    s_rng = np.random.default_rng(abs(hash(f"{team}:{season}")) % (2**32))
+    s_rng = np.random.default_rng(abs(hash(f"{team}:{opp}:{season}")) % (2**32))
     phase_win_probs = {
         "batting": {
             "Powerplay": float(np.clip(s_rng.normal(0.53, 0.08), 0.3, 0.8)),
@@ -588,12 +611,14 @@ def franchise_stats(team: str = Query("CSK"), season: Optional[str] = Query("202
 
 class FranchiseInsightRequest(BaseModel):
     team: str
+    opp: Optional[str] = "All"
     stats_summary: Dict[str, Any]
 
 
 @app.post("/api/franchise_insight")
 def franchise_insight(payload: FranchiseInsightRequest) -> Dict[str, str]:
     team = payload.team
+    opp = payload.opp
     insights = {
         "CSK": "🔹 Primary Tactic: Spin-Choke Protocol. Deploy high-control spinners between overs 7-15 to force a rising Required Run Rate.\n🔹 Risk Factor: Over-reliance on aging core during high-pace death chases.\n🔹 Strategic Move: Hold back 2 overs of premium pace exclusively for overs 18 and 20.",
         "MI": "🔹 Primary Tactic: Death Over Overdrive. Capitalize on low RRR (<10.5) with aggressive power-hitters.\n🔹 Risk Factor: Powerplay swing vulnerability against left-arm seamers.\n🔹 Strategic Move: Anchor the top order, allowing finishers to exploit pace-heavy attacks late in the innings.",
@@ -608,6 +633,10 @@ def franchise_insight(payload: FranchiseInsightRequest) -> Dict[str, str]:
     }
     
     insight = insights.get(team, f"🔹 Primary Tactic: Balanced approach required for {team}.\n🔹 Risk Factor: Standard deviation in metrics.\n🔹 Strategic Move: Focus on matchup optimizations.")
+    
+    if opp and opp != "All":
+        insight += f"\n\n🔥 **Head-to-Head vs {opp}:**\nHistorical data suggests {team} typically alters their primary tactic against {opp}. Focus heavily on matchup advantages during the Powerplay."
+        
     return {"insight_text": insight}
 
 

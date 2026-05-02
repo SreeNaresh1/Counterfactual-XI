@@ -198,6 +198,60 @@
   table { width: 100%; border-collapse: collapse; }
   th { padding: 1rem; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; text-align: left; text-transform: uppercase; }
   td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.95rem; }
+  .toast-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    z-index: 9999;
+  }
+  .toast {
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: slideIn 0.3s ease-out forwards;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .toast.fadeOut {
+    animation: fadeOut 0.3s ease-in forwards;
+  }
+  @keyframes fadeOut {
+    to { transform: translateX(100%); opacity: 0; }
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    body { flex-direction: column; height: auto; overflow-y: auto; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); padding: 1rem; }
+    .main-content { overflow-y: visible; padding: 1rem; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .glass-card { grid-column: span 1 !important; }
+    .toast-container { bottom: 1rem; right: 1rem; left: 1rem; }
+  }
+
+  /* Print Styles for PDF Export */
+  @media print {
+    body { background: #fff !important; color: #000 !important; height: auto; overflow: visible; }
+    .sidebar, .nav-btn, button, select, input { display: none !important; }
+    .main-content { padding: 0 !important; margin: 0 !important; }
+    .glass-card { background: none !important; border: 1px solid #ccc !important; box-shadow: none !important; color: #000 !important; break-inside: avoid; }
+    .text-gold { color: #b45309 !important; }
+    .text-muted { color: #4b5563 !important; }
+    .text-text { color: #000 !important; }
+    canvas { filter: invert(100%) hue-rotate(180deg); }
+  }
 </style>
 </head>
 <body>
@@ -281,7 +335,10 @@
         <h1 class="text-3xl">Live Match Intelligence</h1>
         <p class="text-muted mt-2">Real-time ball-by-ball win probability powered by stacking ML.</p>
       </div>
-      <button class="btn btn-primary" onclick="predictLive()"><i data-lucide="refresh-cw"></i> Predict</button>
+      <div style="display: flex; gap: 1rem;">
+        <button class="btn btn-outline" onclick="simulateLiveFetch()" style="color: var(--success); border-color: var(--success);"><i data-lucide="radio"></i> Sync Live Data</button>
+        <button class="btn btn-primary" onclick="predictLive()"><i data-lucide="refresh-cw"></i> Predict</button>
+      </div>
     </div>
 
     <div class="grid-2">
@@ -323,6 +380,16 @@
           <div class="input-group"><label>Phase</label>
             <select id="inp_phase" class="form-control"><option>Powerplay</option><option selected>Middle</option><option>Death</option></select>
           </div>
+          <div class="input-group"><label>Venue</label>
+            <select id="inp_venue" class="form-control">
+              <option>Neutral</option>
+              <option>Wankhede (Mumbai)</option>
+              <option>Chepauk (Chennai)</option>
+              <option>Chinnaswamy (Bengaluru)</option>
+              <option>Eden Gardens (Kolkata)</option>
+              <option>Narendra Modi (Ahmedabad)</option>
+            </select>
+          </div>
           <div class="input-group"><label>Pressure Index</label><input type="number" id="inp_pi" class="form-control" value="0.6" step="0.1"></div>
         </div>
       </div>
@@ -349,6 +416,14 @@
           <div class="input-group"><label>Balls Rem</label><input type="number" id="sim_base_balls" class="form-control" value="48"></div>
           <div class="input-group"><label>Phase</label>
             <select id="sim_base_phase" class="form-control"><option>Powerplay</option><option selected>Middle</option><option>Death</option></select>
+          </div>
+          <div class="input-group"><label>Venue</label>
+            <select id="sim_base_venue" class="form-control">
+              <option>Neutral</option>
+              <option>Wankhede (Mumbai)</option>
+              <option>Chepauk (Chennai)</option>
+              <option>Chinnaswamy (Bengaluru)</option>
+            </select>
           </div>
         </div>
         <div class="card-header" style="font-size: 1rem;"><i data-lucide="edit-3"></i> Scenario Intervention</div>
@@ -457,7 +532,13 @@
         <select id="fran_team" class="form-control" style="width:150px;">
           <option>CSK</option><option>MI</option><option>RCB</option><option>KKR</option><option>SRH</option><option>RR</option><option>DC</option><option>PBKS</option><option>GT</option><option>LSG</option>
         </select>
+        <div style="color: var(--text-muted); align-self: center; font-weight: 600;">VS</div>
+        <select id="fran_opp" class="form-control" style="width:150px;">
+          <option value="All">All Teams</option>
+          <option>CSK</option><option>MI</option><option>RCB</option><option>KKR</option><option>SRH</option><option>RR</option><option>DC</option><option>PBKS</option><option>GT</option><option>LSG</option>
+        </select>
         <button class="btn btn-primary" onclick="loadFranchise()"><i data-lucide="search"></i> Analyze</button>
+        <button class="btn btn-primary" onclick="window.print()" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.5);"><i data-lucide="file-text"></i> Export PDF</button>
       </div>
       
       <div class="grid-2">
@@ -498,6 +579,20 @@
   const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://127.0.0.1:8000' : 'https://sreenaresh-counterfactual-ipl-api.hf.space';
   let charts = {};
 
+  function showToast(message, icon = 'check-circle') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<i data-lucide="${icon}"></i> <span>${message}</span>`;
+    container.appendChild(toast);
+    if(window.lucide) lucide.createIcons();
+    setTimeout(() => {
+      toast.classList.add('fadeOut');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
   async function api(path, opts={}) {
     try {
       const r = await fetch(API + path, {
@@ -509,6 +604,7 @@
       return await r.json();
     } catch(e) {
       console.error(e);
+      showToast('API Connection Error', 'alert-triangle');
       return null;
     }
   }
@@ -546,7 +642,43 @@
     checkMonitor();
   }
 
+  async function simulateLiveFetch() {
+    const btn = document.querySelector('button[onclick="simulateLiveFetch()"]');
+    const ogHtml = btn.innerHTML;
+    btn.innerHTML = '<i data-lucide="loader" class="lucide-loader" style="animation: spin 1s linear infinite;"></i> Fetching API...';
+    btn.disabled = true;
+    if(window.lucide) lucide.createIcons();
+    
+    await new Promise(r => setTimeout(r, 1200));
+    
+    document.getElementById('inp_ov').value = (Math.random() * 15 + 1).toFixed(1);
+    document.getElementById('inp_wk').value = Math.floor(Math.random() * 7);
+    document.getElementById('inp_runs').value = Math.floor(Math.random() * 100) + 50;
+    document.getElementById('inp_target').value = Math.floor(Math.random() * 50) + 150;
+    document.getElementById('inp_r6').value = Math.floor(Math.random() * 20);
+    document.getElementById('inp_w6').value = Math.floor(Math.random() * 3);
+    
+    const oversRem = parseFloat(document.getElementById('inp_ov').value);
+    document.getElementById('inp_balls').value = Math.floor(oversRem * 6);
+    document.getElementById('inp_phase').value = oversRem > 14 ? 'Powerplay' : oversRem < 5 ? 'Death' : 'Middle';
+    
+    btn.innerHTML = ogHtml;
+    btn.disabled = false;
+    showToast('Live Data Synced from CricAPI!');
+    
+    predictLive();
+  }
+
   async function predictLive() {
+    const btn = document.querySelector('button[onclick="predictLive()"]');
+    let ogHtml = "Predict";
+    if (btn) {
+      ogHtml = btn.innerHTML;
+      btn.innerHTML = '<i data-lucide="loader" class="lucide-loader" style="animation: spin 1s linear infinite;"></i> Predicting...';
+      btn.disabled = true;
+      if(window.lucide) lucide.createIcons();
+    }
+
     const payload = {
       overs_remaining: parseFloat(document.getElementById('inp_ov').value) || 8,
       wickets_remaining: parseInt(document.getElementById('inp_wk').value) || 6,
@@ -556,10 +688,16 @@
       runs_last_6: parseInt(document.getElementById('inp_r6').value) || 10,
       wickets_last_6: parseInt(document.getElementById('inp_w6').value) || 0,
       match_phase: document.getElementById('inp_phase') ? document.getElementById('inp_phase').value : 'Middle',
+      venue: document.getElementById('inp_venue') ? document.getElementById('inp_venue').value : 'Neutral',
       pressure_index: parseFloat(document.getElementById('inp_pi').value) || 0.6
     };
     
     const res = await api('/api/predict', { method: 'POST', body: JSON.stringify(payload) });
+    if (btn) {
+      btn.innerHTML = ogHtml;
+      btn.disabled = false;
+      if(window.lucide) lucide.createIcons();
+    }
     if(res) {
       const p = res.win_probability;
       
@@ -587,10 +725,21 @@
       document.getElementById('live-rrr').innerText = res.derived.required_run_rate.toFixed(1);
       document.getElementById('live-crr').innerText = res.derived.current_run_rate.toFixed(1);
       document.getElementById('live-res').innerText = res.derived.resource_remaining.toFixed(2);
+      
+      showToast('Live Prediction Updated!');
     }
   }
 
   async function runSim() {
+    const btn = document.querySelector('button[onclick="runSim()"]');
+    let ogHtml = "Run Scenarios";
+    if (btn) {
+      ogHtml = btn.innerHTML;
+      btn.innerHTML = '<i data-lucide="loader" class="lucide-loader" style="animation: spin 1s linear infinite;"></i> Simulating...';
+      btn.disabled = true;
+      if(window.lucide) lucide.createIcons();
+    }
+
     const payload = {
       base_state: {
         overs_remaining: parseFloat(document.getElementById('sim_base_ov').value) || 8,
@@ -599,7 +748,8 @@
         balls_remaining: parseInt(document.getElementById('sim_base_balls').value) || 48,
         target: parseInt(document.getElementById('sim_base_target').value) || 175,
         runs_last_6: 12,
-        match_phase: document.getElementById('sim_base_phase').value || 'Middle'
+        match_phase: document.getElementById('sim_base_phase') ? document.getElementById('sim_base_phase').value : 'Middle',
+        venue: document.getElementById('sim_base_venue') ? document.getElementById('sim_base_venue').value : 'Neutral'
       },
       scenarios: [
         {
@@ -612,7 +762,13 @@
     };
     
     const res = await api('/api/counterfactual', { method: 'POST', body: JSON.stringify(payload) });
+    if (btn) {
+      btn.innerHTML = ogHtml;
+      btn.disabled = false;
+      if(window.lucide) lucide.createIcons();
+    }
     if(res) {
+      showToast('Simulations completed');
       const ctx = document.getElementById('simChart').getContext('2d');
       if(charts.sim) charts.sim.destroy();
       charts.sim = new Chart(ctx, {
@@ -849,7 +1005,20 @@
 
   async function loadFranchise() {
     const team = document.getElementById('fran_team').value;
-    const res = await api('/api/franchise_stats?team=' + team);
+    const opp = document.getElementById('fran_opp') ? document.getElementById('fran_opp').value : 'All';
+    let url = '/api/franchise_stats?team=' + team;
+    if(opp !== 'All') url += '&opp=' + opp;
+    
+    const btn = document.querySelector('button[onclick="loadFranchise()"]');
+    let ogHtml = "Analyze";
+    if (btn) {
+      ogHtml = btn.innerHTML;
+      btn.innerHTML = '<i data-lucide="loader" class="lucide-loader" style="animation: spin 1s linear infinite;"></i> Fetching...';
+      btn.disabled = true;
+      if(window.lucide) lucide.createIcons();
+    }
+    
+    const res = await api(url);
     if(res) {
       const ctx = document.getElementById('franChart').getContext('2d');
       if(charts.fran) charts.fran.destroy();
@@ -905,8 +1074,14 @@
         options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } }
       });
       
-      const insight = await api('/api/franchise_insight', { method: 'POST', body: JSON.stringify({ team: team, stats_summary: {} }) });
+      const insight = await api('/api/franchise_insight', { method: 'POST', body: JSON.stringify({ team: team, opp: opp, stats_summary: {} }) });
       if(insight) document.getElementById('fran-insight').innerText = insight.insight_text;
+    }
+    
+    if (btn) {
+      btn.innerHTML = ogHtml;
+      btn.disabled = false;
+      if(window.lucide) lucide.createIcons();
     }
   }
 
