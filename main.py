@@ -809,7 +809,11 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
         fallback_msg = f"**[MOCK LLM - API KEY MISSING]**\n\n**Intent Detected**: {intent}\n\nThe current win probability is **{prob*100:.1f}%**. \n\n* **Primary Driver**: Required Run Rate is at {important_features['required_run_rate']:.1f}, creating a pressure index of {important_features['pressure_index']:.2f}.\n* **Actionable Insight**: Focus on neutralizing the boundary pressure during this {payload.match_state.match_phase} phase.\n\n*(To enable real AI analysis, add GROQ_API_KEY or OPENAI_API_KEY to your environment variables)*\n\n**Confidence Level: Medium** - Model uncertainty due to dummy LLM mode."
         return {"response": fallback_msg, "intent": intent}
 
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {api_key}", 
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    }
     data = {
         "model": "llama3-8b-8192" if is_groq else "gpt-4o-mini",
         "messages": [
