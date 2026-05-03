@@ -801,8 +801,8 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
     Provide your response adhering strictly to the intent rules. Always end your response with a newline and then "Confidence Level: [High/Medium/Low] - [Reason]"
     """
 
-    api_key = os.environ.get("GROQ_API_KEY") or os.environ.get("OPENAI_API_KEY")
-    is_groq = bool(os.environ.get("GROQ_API_KEY"))
+    api_key = (os.environ.get("GROQ_API_KEY") or "").strip() or (os.environ.get("OPENAI_API_KEY") or "").strip()
+    is_groq = bool((os.environ.get("GROQ_API_KEY") or "").strip())
     url = "https://api.groq.com/openai/v1/chat/completions" if is_groq else "https://api.openai.com/v1/chat/completions"
     
     if not api_key:
@@ -820,17 +820,22 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
             {"role": "system", "content": sys_prompt},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.3
+        "temperature": 0.3,
+        "max_tokens": 1024
     }
     
     try:
         import urllib.request
+        import urllib.error
         import json
         req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
         with urllib.request.urlopen(req, timeout=10) as response:
             res_body = json.loads(response.read().decode('utf-8'))
             answer = res_body['choices'][0]['message']['content']
             return {"response": answer, "intent": intent}
+    except urllib.error.HTTPError as e:
+        err_msg = e.read().decode('utf-8', errors='ignore')
+        return {"response": f"**LLM Error:** HTTP {e.code} - {err_msg}", "intent": intent}
     except Exception as e:
         return {"response": f"**LLM Error:** {str(e)}", "intent": intent}
 
