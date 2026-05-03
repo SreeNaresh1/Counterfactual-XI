@@ -806,7 +806,8 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
     CRITICAL RULES:
     1. NEVER invent or mention specific player names or individual statistics. You only have team-level data.
     2. NEVER invent exact mathematical percentages for hypothetical scenarios. Describe the impact qualitatively.
-    3. Provide your response adhering strictly to the intent rules. Format your response clearly using Markdown headings (###). Always end your response with:
+    3. BE CONCISE. Keep your response under 150 words. Use bullet points to save tokens.
+    4. Provide your response adhering strictly to the intent rules. Format your response clearly using Markdown headings (###). Always end your response with:
     
     Confidence Level: [High/Medium/Low] - [Reason]
     """
@@ -833,7 +834,7 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
         "model": "llama-3.1-8b-instant" if is_groq else "gpt-4o-mini",
         "messages": messages,
         "temperature": 0.3,
-        "max_tokens": 1024
+        "max_tokens": 512
     }
     
     try:

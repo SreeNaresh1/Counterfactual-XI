@@ -1251,7 +1251,8 @@
     lucide.createIcons();
     
     // We only send the previous history to avoid sending the current query twice
-    const historyToSend = chatHistory.slice(0, -1).slice(-6); 
+    // Keep history short to avoid Groq TPM rate limits (6000 TPM limit)
+    const historyToSend = chatHistory.slice(0, -1).slice(-4); 
     
     const res = await api('/api/copilot', { method: 'POST', body: JSON.stringify({ query: query, match_state: match_state, history: historyToSend }) });
     
