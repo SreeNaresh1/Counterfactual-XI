@@ -1204,7 +1204,14 @@
     const body = document.getElementById('copilot-body');
     const div = document.createElement('div');
     div.className = `chat-message ${sender}`;
-    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/\n/g, '<br>');
+    let formatted = text
+      .replace(/### (.*?)(?:\n|$)/g, '<h3 style="color:var(--primary); margin-top:0.5rem; font-size:1.1rem; font-weight:bold;">$1</h3>\n')
+      .replace(/#### (.*?)(?:\n|$)/g, '<h4 style="color:var(--gold); margin-top:0.25rem; font-weight:bold;">$1</h4>\n')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n- (.*?)(?:\n|$)/g, '\n<li style="margin-left: 1rem;">$1</li>\n')
+      .replace(/newline/g, '')
+      .replace(/\n/g, '<br>');
     div.innerHTML = formatted;
     body.appendChild(div);
     body.scrollTop = body.scrollHeight;
