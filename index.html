@@ -201,7 +201,7 @@
   .toast-container {
     position: fixed;
     bottom: 2rem;
-    right: 2rem;
+    left: 2rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -239,7 +239,58 @@
     .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
     .glass-card { grid-column: span 1 !important; }
     .toast-container { bottom: 1rem; right: 1rem; left: 1rem; }
+    .copilot-widget { width: 100%; right: 0; }
   }
+
+  /* Copilot Styles */
+  .copilot-widget {
+    position: fixed;
+    bottom: 0;
+    right: 2rem;
+    width: 380px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem 0.75rem 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(calc(100% - 50px));
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .copilot-widget.open { transform: translateY(0); }
+  .copilot-header {
+    height: 50px;
+    padding: 0 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    font-weight: 600;
+    border-radius: 0.75rem 0.75rem 0 0;
+  }
+  .copilot-body {
+    height: 380px;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .chat-message { padding: 0.75rem 1rem; border-radius: 0.75rem; font-size: 0.9rem; line-height: 1.6; max-width: 90%; }
+  .chat-message.bot { background: rgba(255,255,255,0.05); align-self: flex-start; border-bottom-left-radius: 0; border: 1px solid rgba(255,255,255,0.05); }
+  .chat-message.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 0; }
+  .copilot-footer {
+    padding: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+  .copilot-footer input { flex: 1; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: white; }
+  .copilot-footer button { padding: 0.6rem 0.8rem; border-radius: 0.5rem; background: var(--primary); color: white; border: none; cursor: pointer; }
 
   /* Print Styles for PDF Export */
   @media print {
@@ -565,6 +616,23 @@
   </section>
 
 </main>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Copilot UI -->
+  <div id="copilot-widget" class="copilot-widget">
+    <div class="copilot-header" onclick="toggleCopilot()">
+      <span style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="bot"></i> Tactical Copilot</span>
+      <i data-lucide="chevron-up" id="copilot-toggle-icon"></i>
+    </div>
+    <div class="copilot-body" id="copilot-body">
+      <div class="chat-message bot">Hello! I am your <strong>Context-Aware Decision Assistant</strong>. Ask me to explain the win probability drop, suggest new strategies, or run counterfactual scenarios based on the live match state!</div>
+    </div>
+    <div class="copilot-footer">
+      <input type="text" id="copilot-input" placeholder="Ask about strategy or SHAP..." onkeypress="if(event.key === 'Enter') sendCopilotQuery()">
+      <button onclick="sendCopilotQuery()"><i data-lucide="send"></i></button>
+    </div>
+  </div>
 
 <script>
   lucide.createIcons();
@@ -1086,6 +1154,62 @@
   }
 
   window.onload = init;
+
+  function toggleCopilot() {
+    const widget = document.getElementById('copilot-widget');
+    widget.classList.toggle('open');
+    document.getElementById('copilot-toggle-icon').setAttribute('data-lucide', widget.classList.contains('open') ? 'chevron-down' : 'chevron-up');
+    lucide.createIcons();
+  }
+
+  function appendCopilotMessage(text, sender) {
+    const body = document.getElementById('copilot-body');
+    const div = document.createElement('div');
+    div.className = `chat-message ${sender}`;
+    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/\n/g, '<br>');
+    div.innerHTML = formatted;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  async function sendCopilotQuery() {
+    const input = document.getElementById('copilot-input');
+    const query = input.value.trim();
+    if(!query) return;
+    
+    appendCopilotMessage(query, 'user');
+    input.value = '';
+    
+    const match_state = {
+      overs_remaining: parseFloat(document.getElementById('inp_ov').value) || 8,
+      wickets_remaining: parseInt(document.getElementById('inp_wk').value) || 6,
+      cumulative_runs: parseInt(document.getElementById('inp_runs').value) || 112,
+      balls_remaining: parseInt(document.getElementById('inp_balls').value) || 48,
+      target: parseInt(document.getElementById('inp_target').value) || 175,
+      runs_last_6: parseInt(document.getElementById('inp_r6').value) || 10,
+      wickets_last_6: parseInt(document.getElementById('inp_w6').value) || 0,
+      match_phase: document.getElementById('inp_phase') ? document.getElementById('inp_phase').value : 'Middle',
+      venue: document.getElementById('inp_venue') ? document.getElementById('inp_venue').value : 'Neutral',
+      pressure_index: parseFloat(document.getElementById('inp_pi').value) || 0.6
+    };
+    
+    const body = document.getElementById('copilot-body');
+    const loadDiv = document.createElement('div');
+    loadDiv.className = 'chat-message bot';
+    loadDiv.innerHTML = '<i data-lucide="loader" class="lucide-loader" style="animation: spin 1s linear infinite;"></i> Thinking...';
+    body.appendChild(loadDiv);
+    body.scrollTop = body.scrollHeight;
+    lucide.createIcons();
+    
+    const res = await api('/api/copilot', { method: 'POST', body: JSON.stringify({ query: query, match_state: match_state }) });
+    
+    loadDiv.remove();
+    if(res) {
+      appendCopilotMessage(res.response, 'bot');
+    } else {
+      appendCopilotMessage("Failed to connect to Copilot API.", 'bot');
+    }
+  }
 </script>
 </body>
 </html>

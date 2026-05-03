@@ -221,6 +221,11 @@ class CounterfactualPayload(BaseModel):
     scenarios: List[CounterfactualScenario]
 
 
+class CopilotRequest(BaseModel):
+    query: str
+    match_state: MatchState
+
+
 class WhatIfPayload(BaseModel):
     base_state: MatchState
     runs_range: List[int] = Field(default=[0, 20])
@@ -754,6 +759,76 @@ def shap_values(ball_index: int = Query(0, ge=0, le=100000)) -> Dict[str, Any]:
         "feature_shap": {f: float(v) for f, v in zip(features, vals)},
         "prediction": pred,
     }
+
+
+@app.post("/api/copilot")
+def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
+    feat = _derive_features(payload.match_state)
+    prob = _predict_prob(feat)
+    
+    important_features = {
+        "required_run_rate": feat["required_run_rate"],
+        "pressure_index": feat["pressure_index"],
+        "momentum_short": feat["momentum_short"],
+        "runs_last_6": feat["runs_last_6"],
+        "wickets_remaining": feat["wickets_remaining"],
+        "venue": getattr(payload.match_state, 'venue', 'Neutral')
+    }
+    
+    q = payload.query.lower()
+    if any(w in q for w in ["why", "explain", "drop", "change", "reason", "shap", "factor"]):
+        intent = "Explanation"
+        sys_prompt = "You are an elite Cricket Tactician. Intent: Explanation. Explain the win probability using ONLY the provided match state and SHAP features. Rank factors by impact. Do not add external cricket assumptions. Return structured markdown."
+    elif any(w in q for w in ["what if", "simulate", "add", "sub", "would", "scenario", "suppose"]):
+        intent = "Counterfactual"
+        sys_prompt = "You are an elite Cricket Tactician. Intent: Counterfactual. Simulate reasoning using current pressure and phase. Do NOT assume unknown stats. State uncertainty clearly. Return structured markdown."
+    else:
+        intent = "Strategy"
+        sys_prompt = "You are an elite Cricket Tactician. Intent: Strategy. Give 3 actionable strategies based ONLY on current match state. Each must include risk level. Return structured markdown."
+
+    prompt = f"""
+    User Query: {payload.query}
+    
+    Match Context:
+    - Win Probability: {prob*100:.1f}%
+    - Target: {payload.match_state.target}
+    - Overs Remaining: {payload.match_state.overs_remaining}
+    - Phase: {payload.match_state.match_phase}
+    
+    Key Features (SHAP Proxy):
+    {important_features}
+    
+    Provide your response adhering strictly to the intent rules. Always end your response with a newline and then "Confidence Level: [High/Medium/Low] - [Reason]"
+    """
+
+    api_key = os.environ.get("GROQ_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    is_groq = bool(os.environ.get("GROQ_API_KEY"))
+    url = "https://api.groq.com/openai/v1/chat/completions" if is_groq else "https://api.openai.com/v1/chat/completions"
+    
+    if not api_key:
+        fallback_msg = f"**[MOCK LLM - API KEY MISSING]**\n\n**Intent Detected**: {intent}\n\nThe current win probability is **{prob*100:.1f}%**. \n\n* **Primary Driver**: Required Run Rate is at {important_features['required_run_rate']:.1f}, creating a pressure index of {important_features['pressure_index']:.2f}.\n* **Actionable Insight**: Focus on neutralizing the boundary pressure during this {payload.match_state.match_phase} phase.\n\n*(To enable real AI analysis, add GROQ_API_KEY or OPENAI_API_KEY to your environment variables)*\n\n**Confidence Level: Medium** - Model uncertainty due to dummy LLM mode."
+        return {"response": fallback_msg, "intent": intent}
+
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    data = {
+        "model": "llama3-8b-8192" if is_groq else "gpt-4o-mini",
+        "messages": [
+            {"role": "system", "content": sys_prompt},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.3
+    }
+    
+    try:
+        import urllib.request
+        import json
+        req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), headers=headers, method='POST')
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_body = json.loads(response.read().decode('utf-8'))
+            answer = res_body['choices'][0]['message']['content']
+            return {"response": answer, "intent": intent}
+    except Exception as e:
+        return {"response": f"**LLM Error:** {str(e)}", "intent": intent}
 
 
 @app.get("/api/global_importance")
