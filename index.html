@@ -257,9 +257,20 @@
     display: flex;
     flex-direction: column;
     transform: translateY(calc(100% - 50px));
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .copilot-widget.open { transform: translateY(0); }
+  .copilot-widget.fullscreen {
+    width: 90vw;
+    height: 90vh;
+    right: 5vw;
+    bottom: 5vh;
+    border-radius: 1rem;
+    transform: translateY(0);
+  }
+  .copilot-widget.fullscreen .copilot-body {
+    height: calc(90vh - 130px);
+  }
   .copilot-header {
     height: 50px;
     padding: 0 1rem;
@@ -624,7 +635,10 @@
   <div id="copilot-widget" class="copilot-widget">
     <div class="copilot-header" onclick="toggleCopilot()">
       <span style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="bot"></i> Tactical Copilot</span>
-      <i data-lucide="chevron-up" id="copilot-toggle-icon"></i>
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <i data-lucide="maximize-2" id="copilot-fullscreen-icon" onclick="toggleCopilotFullscreen(event)" style="opacity:0.7; transition: opacity 0.2s;"></i>
+        <i data-lucide="chevron-up" id="copilot-toggle-icon"></i>
+      </div>
     </div>
     <div class="copilot-body" id="copilot-body">
       <div class="chat-message bot">Hello! I am your <strong>Context-Aware Decision Assistant</strong>. Ask me to explain the win probability drop, suggest new strategies, or run counterfactual scenarios based on the live match state!</div>
@@ -1160,7 +1174,30 @@
     const widget = document.getElementById('copilot-widget');
     widget.classList.toggle('open');
     document.getElementById('copilot-toggle-icon').setAttribute('data-lucide', widget.classList.contains('open') ? 'chevron-down' : 'chevron-up');
-    lucide.createIcons();
+    if (!widget.classList.contains('open') && widget.classList.contains('fullscreen')) {
+        widget.classList.remove('fullscreen');
+        document.getElementById('copilot-fullscreen-icon').setAttribute('data-lucide', 'maximize-2');
+    }
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function toggleCopilotFullscreen(e) {
+    e.stopPropagation();
+    const widget = document.getElementById('copilot-widget');
+    const icon = document.getElementById('copilot-fullscreen-icon');
+    
+    if(widget.classList.contains('fullscreen')) {
+      widget.classList.remove('fullscreen');
+      icon.setAttribute('data-lucide', 'maximize-2');
+    } else {
+      widget.classList.add('fullscreen');
+      if(!widget.classList.contains('open')) {
+        widget.classList.add('open');
+        document.getElementById('copilot-toggle-icon').setAttribute('data-lucide', 'chevron-down');
+      }
+      icon.setAttribute('data-lucide', 'minimize-2');
+    }
+    if(window.lucide) lucide.createIcons();
   }
 
   function appendCopilotMessage(text, sender) {
