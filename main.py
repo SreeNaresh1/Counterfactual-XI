@@ -798,7 +798,7 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
     Key Features (SHAP Proxy):
     {important_features}
     
-    Provide your response adhering strictly to the intent rules. Always end your response with a newline and then "Confidence Level: [High/Medium/Low] - [Reason]"
+    Provide your response adhering strictly to the intent rules. Always end your response by adding a line break followed by exactly: "Confidence Level: [High/Medium/Low] - [Reason]"
     """
 
     api_key = (os.environ.get("GROQ_API_KEY") or "").strip() or (os.environ.get("OPENAI_API_KEY") or "").strip()
