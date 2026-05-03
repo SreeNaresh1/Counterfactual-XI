@@ -783,13 +783,13 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
     q = payload.query.lower()
     if any(w in q for w in ["why", "explain", "drop", "change", "reason", "shap", "factor"]):
         intent = "Explanation"
-        sys_prompt = "You are an elite Cricket Tactician. Intent: Explanation. Explain the win probability using ONLY the provided match state and SHAP features. Rank factors by impact. Do not add external cricket assumptions. Return structured markdown."
+        sys_prompt = "You are an elite Cricket Tactician. Intent: Explanation. Explain the win probability using ONLY the provided match state and SHAP features. Rank factors by impact. Do NOT hallucinate player names or individual stats (this model tracks team-level metrics only)."
     elif any(w in q for w in ["what if", "simulate", "add", "sub", "would", "scenario", "suppose"]):
         intent = "Counterfactual"
-        sys_prompt = "You are an elite Cricket Tactician. Intent: Counterfactual. Simulate reasoning using current pressure and phase. Do NOT assume unknown stats. State uncertainty clearly. Return structured markdown."
+        sys_prompt = "You are an elite Cricket Tactician. Intent: Counterfactual. Simulate reasoning using current pressure and phase. You CANNOT calculate exact new win probabilities, so DO NOT invent percentage numbers. Explain the directional impact (e.g., 'Probability will decrease sharply'). Do NOT hallucinate player names or individual stats."
     else:
         intent = "Strategy"
-        sys_prompt = "You are an elite Cricket Tactician. Intent: Strategy. Give 3 actionable strategies based ONLY on current match state. Each must include risk level. Return structured markdown."
+        sys_prompt = "You are an elite Cricket Tactician. Intent: Strategy. Give 3 actionable strategies based ONLY on current match state. Each must include risk level. Do NOT hallucinate specific player names or individual stats. Keep strategies focused on pacing, targets, and pressure."
 
     prompt = f"""
     User Query: {payload.query}
@@ -803,7 +803,10 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
     Key Features (SHAP Proxy):
     {important_features}
     
-    Provide your response adhering strictly to the intent rules. Format your response clearly. Always end your response with:
+    CRITICAL RULES:
+    1. NEVER invent or mention specific player names or individual statistics. You only have team-level data.
+    2. NEVER invent exact mathematical percentages for hypothetical scenarios. Describe the impact qualitatively.
+    3. Provide your response adhering strictly to the intent rules. Format your response clearly using Markdown headings (###). Always end your response with:
     
     Confidence Level: [High/Medium/Low] - [Reason]
     """
