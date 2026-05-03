@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   :root {
     --bg: #030712;
@@ -1200,19 +1201,21 @@
     if(window.lucide) lucide.createIcons();
   }
 
+  let chatHistory = [];
+
   function appendCopilotMessage(text, sender) {
     const body = document.getElementById('copilot-body');
     const div = document.createElement('div');
     div.className = `chat-message ${sender}`;
-    let formatted = text
-      .replace(/### (.*?)(?:\n|$)/g, '<h3 style="color:var(--primary); margin-top:0.5rem; font-size:1.1rem; font-weight:bold;">$1</h3>\n')
-      .replace(/#### (.*?)(?:\n|$)/g, '<h4 style="color:var(--gold); margin-top:0.25rem; font-weight:bold;">$1</h4>\n')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\n- (.*?)(?:\n|$)/g, '\n<li style="margin-left: 1rem;">$1</li>\n')
-      .replace(/newline/g, '')
-      .replace(/\n/g, '<br>');
-    div.innerHTML = formatted;
+    if(sender === 'bot') {
+      try {
+        div.innerHTML = marked.parse(text);
+      } catch (e) {
+        div.innerHTML = text.replace(/\n/g, '<br>');
+      }
+    } else {
+      div.innerText = text;
+    }
     body.appendChild(div);
     body.scrollTop = body.scrollHeight;
   }
@@ -1223,6 +1226,7 @@
     if(!query) return;
     
     appendCopilotMessage(query, 'user');
+    chatHistory.push({ role: 'user', content: query });
     input.value = '';
     
     const match_state = {
@@ -1246,11 +1250,15 @@
     body.scrollTop = body.scrollHeight;
     lucide.createIcons();
     
-    const res = await api('/api/copilot', { method: 'POST', body: JSON.stringify({ query: query, match_state: match_state }) });
+    // We only send the previous history to avoid sending the current query twice
+    const historyToSend = chatHistory.slice(0, -1).slice(-6); 
+    
+    const res = await api('/api/copilot', { method: 'POST', body: JSON.stringify({ query: query, match_state: match_state, history: historyToSend }) });
     
     loadDiv.remove();
     if(res) {
       appendCopilotMessage(res.response, 'bot');
+      chatHistory.push({ role: 'assistant', content: res.response });
     } else {
       appendCopilotMessage("Failed to connect to Copilot API.", 'bot');
     }

@@ -221,9 +221,14 @@ class CounterfactualPayload(BaseModel):
     scenarios: List[CounterfactualScenario]
 
 
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
 class CopilotRequest(BaseModel):
     query: str
     match_state: MatchState
+    history: List[ChatMessage] = Field(default_factory=list)
 
 
 class WhatIfPayload(BaseModel):
@@ -798,7 +803,9 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
     Key Features (SHAP Proxy):
     {important_features}
     
-    Provide your response adhering strictly to the intent rules. Always end your response by adding a line break followed by exactly: "Confidence Level: [High/Medium/Low] - [Reason]"
+    Provide your response adhering strictly to the intent rules. Format your response clearly. Always end your response with:
+    
+    Confidence Level: [High/Medium/Low] - [Reason]
     """
 
     api_key = (os.environ.get("GROQ_API_KEY") or "").strip() or (os.environ.get("OPENAI_API_KEY") or "").strip()
@@ -814,12 +821,14 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
         "Content-Type": "application/json",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
+    messages = [{"role": "system", "content": sys_prompt}]
+    for msg in payload.history:
+        messages.append({"role": msg.role, "content": msg.content})
+    messages.append({"role": "user", "content": prompt})
+
     data = {
         "model": "llama-3.1-8b-instant" if is_groq else "gpt-4o-mini",
-        "messages": [
-            {"role": "system", "content": sys_prompt},
-            {"role": "user", "content": prompt}
-        ],
+        "messages": messages,
         "temperature": 0.3,
         "max_tokens": 1024
     }
