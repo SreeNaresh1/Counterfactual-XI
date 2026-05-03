@@ -815,7 +815,7 @@ def copilot_chat(payload: CopilotRequest) -> Dict[str, Any]:
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
     data = {
-        "model": "llama3-8b-8192" if is_groq else "gpt-4o-mini",
+        "model": "llama-3.1-8b-instant" if is_groq else "gpt-4o-mini",
         "messages": [
             {"role": "system", "content": sys_prompt},
             {"role": "user", "content": prompt}
