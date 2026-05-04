@@ -1,0 +1,165 @@
+<svg width="680" height="560" viewBox="0 0 680 560" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Counterfactual — reimagined logo</title>
+<desc>Two crystalline prism-wings erupt from a blazing singularity at center. The upper wing refracts into violet spectrum bands representing possibility; the lower wing refracts into teal bands representing reality.</desc>
+
+<defs>
+  <linearGradient id="burst" x1="0.5" y1="0" x2="0.5" y2="1">
+    <stop offset="0%" stop-color="#AFA9EC" stop-opacity="0.0"/>
+    <stop offset="48%" stop-color="#7F77DD" stop-opacity="0.9"/>
+    <stop offset="50%" stop-color="#FFFFFF" stop-opacity="1"/>
+    <stop offset="52%" stop-color="#1D9E75" stop-opacity="0.9"/>
+    <stop offset="100%" stop-color="#5DCAA5" stop-opacity="0.0"/>
+  </linearGradient>
+  <linearGradient id="g-upper-fill" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0%" stop-color="#7F77DD" stop-opacity="0.85"/>
+    <stop offset="100%" stop-color="#EEEDFE" stop-opacity="0.1"/>
+  </linearGradient>
+  <linearGradient id="g-lower-fill" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.85"/>
+    <stop offset="100%" stop-color="#E1F5EE" stop-opacity="0.1"/>
+  </linearGradient>
+  <linearGradient id="g-band-v1" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0%" stop-color="#534AB7" stop-opacity="0.7"/>
+    <stop offset="100%" stop-color="#534AB7" stop-opacity="0.0"/>
+  </linearGradient>
+  <linearGradient id="g-band-v2" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0%" stop-color="#7F77DD" stop-opacity="0.6"/>
+    <stop offset="100%" stop-color="#7F77DD" stop-opacity="0.0"/>
+  </linearGradient>
+  <linearGradient id="g-band-v3" x1="0" y1="1" x2="0" y2="0">
+    <stop offset="0%" stop-color="#AFA9EC" stop-opacity="0.5"/>
+    <stop offset="100%" stop-color="#AFA9EC" stop-opacity="0.0"/>
+  </linearGradient>
+  <linearGradient id="g-band-t1" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#0F6E56" stop-opacity="0.7"/>
+    <stop offset="100%" stop-color="#0F6E56" stop-opacity="0.0"/>
+  </linearGradient>
+  <linearGradient id="g-band-t2" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1D9E75" stop-opacity="0.6"/>
+    <stop offset="100%" stop-color="#1D9E75" stop-opacity="0.0"/>
+  </linearGradient>
+  <linearGradient id="g-band-t3" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#5DCAA5" stop-opacity="0.5"/>
+    <stop offset="100%" stop-color="#5DCAA5" stop-opacity="0.0"/>
+  </linearGradient>
+  <radialGradient id="core-glow" cx="50%" cy="50%" r="50%">
+    <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="1"/>
+    <stop offset="35%"  stop-color="#E8E6FF" stop-opacity="0.9"/>
+    <stop offset="70%"  stop-color="#7F77DD" stop-opacity="0.3"/>
+    <stop offset="100%" stop-color="#7F77DD" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="spark-purple" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#FFFFFF"/>
+    <stop offset="60%" stop-color="#7F77DD" stop-opacity="0.6"/>
+    <stop offset="100%" stop-color="#7F77DD" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="spark-teal" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#FFFFFF"/>
+    <stop offset="60%" stop-color="#1D9E75" stop-opacity="0.6"/>
+    <stop offset="100%" stop-color="#1D9E75" stop-opacity="0"/>
+  </radialGradient>
+  <path id="arc-tag" d="M120 542 Q340 556 560 542"/>
+</defs>
+
+<!-- UPPER PRISM WING -->
+<polygon points="340,258  120,52  560,52" fill="url(#g-upper-fill)" stroke="#7F77DD" stroke-width="0.8" opacity="0.9"/>
+<polygon points="340,258  156,52  196,52"  fill="url(#g-band-v1)" opacity="0.85"/>
+<polygon points="340,258  196,52  248,52"  fill="url(#g-band-v2)" opacity="0.7"/>
+<polygon points="340,258  248,52  308,52"  fill="url(#g-band-v3)" opacity="0.55"/>
+<polygon points="340,258  308,52  370,52"  fill="url(#g-band-v3)" opacity="0.3"/>
+<polygon points="340,258  370,52  430,52"  fill="url(#g-band-v2)" opacity="0.55"/>
+<polygon points="340,258  430,52  492,52"  fill="url(#g-band-v1)" opacity="0.7"/>
+<polygon points="340,258  492,52  524,52"  fill="url(#g-band-v1)" opacity="0.85"/>
+<line x1="340" y1="258" x2="120" y2="52"  stroke="#7F77DD" stroke-width="1.5" opacity="0.6"/>
+<line x1="340" y1="258" x2="560" y2="52"  stroke="#7F77DD" stroke-width="1.5" opacity="0.6"/>
+<line x1="120" y1="52"  x2="560" y2="52"  stroke="#AFA9EC"  stroke-width="1"   opacity="0.5"/>
+<line x1="340" y1="258" x2="76"  y2="52" stroke="#534AB7" stroke-width="0.6" opacity="0.25"/>
+<line x1="340" y1="258" x2="54"  y2="72" stroke="#534AB7" stroke-width="0.4" opacity="0.15"/>
+<line x1="340" y1="258" x2="596" y2="52" stroke="#534AB7" stroke-width="0.6" opacity="0.25"/>
+<line x1="340" y1="258" x2="618" y2="72" stroke="#534AB7" stroke-width="0.4" opacity="0.15"/>
+<line x1="340" y1="258" x2="214" y2="110" stroke="#AFA9EC" stroke-width="0.5" opacity="0.35" stroke-dasharray="3 5"/>
+<line x1="340" y1="258" x2="176" y2="80"  stroke="#AFA9EC" stroke-width="0.4" opacity="0.2"  stroke-dasharray="2 7"/>
+<line x1="340" y1="258" x2="466" y2="110" stroke="#AFA9EC" stroke-width="0.5" opacity="0.35" stroke-dasharray="3 5"/>
+<line x1="340" y1="258" x2="504" y2="80"  stroke="#AFA9EC" stroke-width="0.4" opacity="0.2"  stroke-dasharray="2 7"/>
+<circle cx="178" cy="52" r="3.5" fill="#534AB7" opacity="0.8"/>
+<circle cx="250" cy="52" r="2.5" fill="#7F77DD" opacity="0.7"/>
+<circle cx="340" cy="52" r="4"   fill="#AFA9EC" opacity="0.6"/>
+<circle cx="430" cy="52" r="2.5" fill="#7F77DD" opacity="0.7"/>
+<circle cx="502" cy="52" r="3.5" fill="#534AB7" opacity="0.8"/>
+<circle cx="148" cy="90"  r="1.5" fill="url(#spark-purple)" opacity="0.7"/>
+<circle cx="200" cy="75"  r="1"   fill="#7F77DD" opacity="0.6"/>
+<circle cx="280" cy="66"  r="1.5" fill="url(#spark-purple)" opacity="0.5"/>
+<circle cx="400" cy="66"  r="1.5" fill="url(#spark-purple)" opacity="0.5"/>
+<circle cx="480" cy="75"  r="1"   fill="#7F77DD" opacity="0.6"/>
+<circle cx="532" cy="90"  r="1.5" fill="url(#spark-purple)" opacity="0.7"/>
+
+<!-- LOWER PRISM WING -->
+<polygon points="340,262  120,468  560,468" fill="url(#g-lower-fill)" stroke="#1D9E75" stroke-width="0.8" opacity="0.9"/>
+<polygon points="340,262  156,468  196,468"  fill="url(#g-band-t1)" opacity="0.85"/>
+<polygon points="340,262  196,468  248,468"  fill="url(#g-band-t2)" opacity="0.7"/>
+<polygon points="340,262  248,468  308,468"  fill="url(#g-band-t3)" opacity="0.55"/>
+<polygon points="340,262  308,468  370,468"  fill="url(#g-band-t3)" opacity="0.3"/>
+<polygon points="340,262  370,468  430,468"  fill="url(#g-band-t2)" opacity="0.55"/>
+<polygon points="340,262  430,468  492,468"  fill="url(#g-band-t1)" opacity="0.7"/>
+<polygon points="340,262  492,468  524,468"  fill="url(#g-band-t1)" opacity="0.85"/>
+<line x1="340" y1="262" x2="120" y2="468" stroke="#1D9E75" stroke-width="1.5" opacity="0.6"/>
+<line x1="340" y1="262" x2="560" y2="468" stroke="#1D9E75" stroke-width="1.5" opacity="0.6"/>
+<line x1="120" y1="468" x2="560" y2="468" stroke="#5DCAA5" stroke-width="1"   opacity="0.5"/>
+<line x1="340" y1="262" x2="76"  y2="468" stroke="#0F6E56" stroke-width="0.6" opacity="0.25"/>
+<line x1="340" y1="262" x2="54"  y2="448" stroke="#0F6E56" stroke-width="0.4" opacity="0.15"/>
+<line x1="340" y1="262" x2="596" y2="468" stroke="#0F6E56" stroke-width="0.6" opacity="0.25"/>
+<line x1="340" y1="262" x2="618" y2="448" stroke="#0F6E56" stroke-width="0.4" opacity="0.15"/>
+<line x1="340" y1="262" x2="214" y2="410" stroke="#5DCAA5" stroke-width="0.5" opacity="0.35" stroke-dasharray="3 5"/>
+<line x1="340" y1="262" x2="176" y2="440" stroke="#5DCAA5" stroke-width="0.4" opacity="0.2"  stroke-dasharray="2 7"/>
+<line x1="340" y1="262" x2="466" y2="410" stroke="#5DCAA5" stroke-width="0.5" opacity="0.35" stroke-dasharray="3 5"/>
+<line x1="340" y1="262" x2="504" y2="440" stroke="#5DCAA5" stroke-width="0.4" opacity="0.2"  stroke-dasharray="2 7"/>
+<circle cx="178" cy="468" r="3.5" fill="#0F6E56" opacity="0.8"/>
+<circle cx="250" cy="468" r="2.5" fill="#1D9E75" opacity="0.7"/>
+<circle cx="340" cy="468" r="4"   fill="#5DCAA5" opacity="0.6"/>
+<circle cx="430" cy="468" r="2.5" fill="#1D9E75" opacity="0.7"/>
+<circle cx="502" cy="468" r="3.5" fill="#0F6E56" opacity="0.8"/>
+<circle cx="148" cy="430" r="1.5" fill="url(#spark-teal)" opacity="0.7"/>
+<circle cx="200" cy="445" r="1"   fill="#1D9E75" opacity="0.6"/>
+<circle cx="280" cy="454" r="1.5" fill="url(#spark-teal)" opacity="0.5"/>
+<circle cx="400" cy="454" r="1.5" fill="url(#spark-teal)" opacity="0.5"/>
+<circle cx="480" cy="445" r="1"   fill="#1D9E75" opacity="0.6"/>
+<circle cx="532" cy="430" r="1.5" fill="url(#spark-teal)" opacity="0.7"/>
+
+<!-- NEXUS -->
+<circle cx="340" cy="260" r="42" fill="url(#core-glow)" opacity="0.5"/>
+<circle cx="340" cy="260" r="28" fill="url(#core-glow)" opacity="0.7"/>
+<circle cx="340" cy="260" r="38" fill="none" stroke="#888780" stroke-width="0.5" opacity="0.3" stroke-dasharray="2 6"/>
+<circle cx="340" cy="260" r="24" fill="none" stroke="#888780" stroke-width="0.7" opacity="0.4"/>
+<line x1="316" y1="260" x2="364" y2="260" stroke="#FFFFFF" stroke-width="0.8" opacity="0.7"/>
+<line x1="340" y1="236" x2="340" y2="284" stroke="#FFFFFF" stroke-width="0.8" opacity="0.7"/>
+<line x1="323" y1="243" x2="357" y2="277" stroke="#FFFFFF" stroke-width="0.5" opacity="0.35"/>
+<line x1="357" y1="243" x2="323" y2="277" stroke="#FFFFFF" stroke-width="0.5" opacity="0.35"/>
+<circle cx="340" cy="260" r="12" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.6"/>
+<circle cx="340" cy="260" r="6.5" fill="#FFFFFF" opacity="1"/>
+<circle cx="340" cy="260" r="4"   fill="#534AB7" opacity="0.6"/>
+<circle cx="340" cy="260" r="2"   fill="#FFFFFF" opacity="1"/>
+<line x1="100" y1="260" x2="580" y2="260" stroke="url(#burst)" stroke-width="1.2" opacity="0.8"/>
+
+<!-- WORDMARK -->
+<text x="226" y="516"
+  font-family="Georgia, serif"
+  font-size="26"
+  font-weight="400"
+  letter-spacing="3"
+  text-anchor="end"
+  fill="#7F77DD">counter</text>
+<text x="232" y="516"
+  font-family="Georgia, serif"
+  font-size="26"
+  font-weight="400"
+  letter-spacing="3"
+  text-anchor="start"
+  fill="#1D9E75">factual</text>
+<line x1="108" y1="527" x2="336" y2="527" stroke="#7F77DD" stroke-width="1.2" opacity="0.7"/>
+<line x1="344" y1="527" x2="572" y2="527" stroke="#1D9E75" stroke-width="1.2" opacity="0.7"/>
+<circle cx="340" cy="527" r="2.5" fill="#888780" opacity="0.7"/>
+<text font-family="Georgia, serif" font-size="9" letter-spacing="4" opacity="0.3" text-anchor="middle" fill="#888780">
+  <textPath href="#arc-tag" startOffset="50%">· · · the moment everything diverged · · ·</textPath>
+</text>
+
+</svg>
