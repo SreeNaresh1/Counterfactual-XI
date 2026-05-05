@@ -1,4 +1,4 @@
-﻿# .gitignore
+# .gitignore
 __pycache__/
 *.joblib
 artifacts/*.joblib
@@ -7,6 +7,6 @@ artifacts/*.joblib
 *.pkl
 dataset/
 .venv/
-venv/.venv2/
+.venv2/
 node_modules/
 __pycache__/
